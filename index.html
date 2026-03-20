@@ -7,8 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="가계부">
 <meta name="theme-color" content="#ffffff" id="themeColor">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.svg">
 <title>가계부</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -485,15 +483,34 @@ const LS = { tx:'wb_tx_v3', bg:'wb_bg_v3', rc:'wb_rc_v1', dk:'wb_dk' };
 
 // ── PERSIST ──
 function load() {
-  try { transactions = JSON.parse(localStorage.getItem(LS.tx)) || []; } catch { transactions = []; }
-  try { budget = JSON.parse(localStorage.getItem(LS.bg)) || {total:0,cats:{}}; } catch { budget = {total:0,cats:{}}; }
-  try { recurring = JSON.parse(localStorage.getItem(LS.rc)) || []; } catch { recurring = []; }
+  try {
+    const tx = localStorage.getItem(LS.tx);
+    transactions = tx ? JSON.parse(tx) : [];
+  } catch(e) { console.warn('tx load error:', e); transactions = []; }
+  try {
+    const bg = localStorage.getItem(LS.bg);
+    budget = bg ? JSON.parse(bg) : {total:0, cats:{}};
+  } catch(e) { console.warn('budget load error:', e); budget = {total:0, cats:{}}; }
+  try {
+    const rc = localStorage.getItem(LS.rc);
+    recurring = rc ? JSON.parse(rc) : [];
+  } catch(e) { console.warn('recurring load error:', e); recurring = []; }
   if (localStorage.getItem(LS.dk) === '1') document.documentElement.setAttribute('data-theme','dark');
+  console.log('✅ 로드 완료 — 내역', transactions.length, '건');
 }
 function saveAll() {
-  localStorage.setItem(LS.tx, JSON.stringify(transactions));
-  localStorage.setItem(LS.bg, JSON.stringify(budget));
-  localStorage.setItem(LS.rc, JSON.stringify(recurring));
+  try {
+    localStorage.setItem(LS.tx, JSON.stringify(transactions));
+    localStorage.setItem(LS.bg, JSON.stringify(budget));
+    localStorage.setItem(LS.rc, JSON.stringify(recurring));
+    // 저장 검증
+    const saved = localStorage.getItem(LS.tx);
+    const parsed = JSON.parse(saved);
+    console.log('✅ 저장 완료 — 내역', parsed.length, '건');
+  } catch(e) {
+    console.error('❌ 저장 실패:', e);
+    alert('저장에 실패했어요. 저장 공간이 부족하거나 브라우저 설정을 확인해주세요.');
+  }
 }
 
 // ── AUTO APPLY RECURRING ──
@@ -935,15 +952,8 @@ function closeOverlay(id, e) {
   document.getElementById(id).classList.remove('open');
 }
 
-// ── SERVICE WORKER ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(r => console.log('SW registered:', r.scope))
-      .catch(e => console.log('SW failed:', e));
-  });
-}
-
+// ── INIT ──
+load();
 if (localStorage.getItem(LS.dk)==='1') {
   document.getElementById('darkBtn').textContent='☀️';
   document.getElementById('themeColor').setAttribute('content','#1e1e1c');
