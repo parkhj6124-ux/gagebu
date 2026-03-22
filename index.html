@@ -328,7 +328,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
         <div class="summary-value s-expense" id="sumExpense">₩0</div>
       </div>
       <div class="summary-card">
-        <div class="summary-label">잔액</div>
+        <div class="summary-label" id="sumBalanceLabel">잔액</div>
         <div class="summary-value" id="sumBalance">₩0</div>
       </div>
     </div>
@@ -485,37 +485,52 @@ const LS = { tx:'wb_tx_v3', bg:'wb_bg_v3', rc:'wb_rc_v1', dk:'wb_dk' };
 function load() {
   try {
     const tx = localStorage.getItem(LS.tx);
-    transactions = tx ? JSON.parse(tx) : [];
-  } catch(e) { console.warn('tx load error:', e); transactions = []; }
+    if (tx) {
+      const parsed = JSON.parse(tx);
+      if (Array.isArray(parsed)) transactions = parsed;
+    }
+  } catch(e) { console.warn('tx load error:', e); }
+
   try {
     const bg = localStorage.getItem(LS.bg);
-    budget = bg ? JSON.parse(bg) : {total:0, cats:{}};
-  } catch(e) { console.warn('budget load error:', e); budget = {total:0, cats:{}}; }
+    if (bg) {
+      const parsed = JSON.parse(bg);
+      if (parsed && typeof parsed === 'object') budget = parsed;
+    }
+  } catch(e) { console.warn('budget load error:', e); }
+
   try {
     const rc = localStorage.getItem(LS.rc);
-    recurring = rc ? JSON.parse(rc) : [];
-  } catch(e) { console.warn('recurring load error:', e); recurring = []; }
+    if (rc) {
+      const parsed = JSON.parse(rc);
+      if (Array.isArray(parsed)) recurring = parsed;
+    }
+  } catch(e) { console.warn('recurring load error:', e); }
+
   if (localStorage.getItem(LS.dk) === '1') document.documentElement.setAttribute('data-theme','dark');
   console.log('✅ 로드 완료 — 내역', transactions.length, '건');
 }
+
 function saveAll() {
   try {
-    localStorage.setItem(LS.tx, JSON.stringify(transactions));
-    localStorage.setItem(LS.bg, JSON.stringify(budget));
-    localStorage.setItem(LS.rc, JSON.stringify(recurring));
-    // 저장 검증
-    const saved = localStorage.getItem(LS.tx);
-    const parsed = JSON.parse(saved);
-    console.log('✅ 저장 완료 — 내역', parsed.length, '건');
+    const txStr = JSON.stringify(transactions);
+    const bgStr = JSON.stringify(budget);
+    const rcStr = JSON.stringify(recurring);
+    localStorage.setItem(LS.tx, txStr);
+    localStorage.setItem(LS.bg, bgStr);
+    localStorage.setItem(LS.rc, rcStr);
+    console.log('✅ 저장 완료 — 내역', transactions.length, '건');
   } catch(e) {
     console.error('❌ 저장 실패:', e);
-    alert('저장에 실패했어요. 저장 공간이 부족하거나 브라우저 설정을 확인해주세요.');
+    alert('저장 실패! 브라우저 저장 공간을 확인해주세요.');
   }
 }
 
 // ── AUTO APPLY RECURRING ──
 function applyRecurring() {
+  if (!recurring.length) return;   // 고정 항목 없으면 아무것도 안 함
   const todayStr = new Date().toISOString().split('T')[0];
+  let added = 0;
   recurring.forEach(r => {
     const day = String(r.day).padStart(2,'0');
     const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${day}`;
@@ -528,10 +543,11 @@ function applyRecurring() {
           amount: r.amount, memo: r.name, date: key,
           type: r.type, cat: r.cat
         });
+        added++;
       }
     }
   });
-  saveAll();
+  if (added > 0) saveAll();   // 실제로 추가됐을 때만 저장
 }
 
 // ── HELPERS ──
@@ -546,12 +562,24 @@ function renderHeader() {
   const txs = monthTxs();
   const inc = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const bal = inc - exp;
   document.getElementById('sumIncome').textContent  = fmt(inc);
   document.getElementById('sumExpense').textContent = fmt(exp);
-  const bEl = document.getElementById('sumBalance');
-  bEl.textContent = fmt(bal);
-  bEl.style.color = bal < 0 ? 'var(--red)' : bal > 0 ? 'var(--green)' : 'var(--text)';
+
+  const bEl  = document.getElementById('sumBalance');
+  const lblEl = document.getElementById('sumBalanceLabel');
+  if (budget.total > 0) {
+    // 예산이 설정된 경우: 예산 - 지출
+    const bal = budget.total - exp;
+    bEl.textContent = (bal < 0 ? '-' : '') + fmt(bal);
+    bEl.style.color = bal < 0 ? 'var(--red)' : bal <= budget.total * 0.2 ? 'var(--orange)' : 'var(--green)';
+    if (lblEl) lblEl.textContent = '예산잔액';
+  } else {
+    // 예산 미설정: 수입 - 지출
+    const bal = inc - exp;
+    bEl.textContent = fmt(bal);
+    bEl.style.color = bal < 0 ? 'var(--red)' : bal > 0 ? 'var(--green)' : 'var(--text)';
+    if (lblEl) lblEl.textContent = '잔액';
+  }
 }
 
 // ── RENDER LIST ──
