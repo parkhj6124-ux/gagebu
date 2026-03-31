@@ -260,9 +260,117 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 /* Safe area for notch / Dynamic Island */
 .header{padding-left:max(12px, env(safe-area-inset-left));padding-right:max(12px, env(safe-area-inset-right));}
 .fab{bottom:calc(20px + env(safe-area-inset-bottom, 0px));}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;padding-top:calc(32px + env(safe-area-inset-top,0px));}
+.login-logo{width:72px;height:72px;background:var(--text);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--gold);font-weight:900;font-family:serif;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+.login-title{font-size:26px;font-weight:900;color:var(--text);letter-spacing:-0.5px;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:40px;text-align:center;line-height:1.6;}
+.login-btn{width:100%;max-width:320px;padding:14px 20px;border-radius:14px;border:1.5px solid var(--border);background:var(--white);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text);display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:all 0.15s;box-shadow:var(--shadow);}
+.login-btn:active{transform:scale(0.98);opacity:0.85;}
+.login-btn-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.login-btn-text{flex:1;text-align:left;}
+.login-divider{display:flex;align-items:center;gap:10px;margin:8px 0;width:100%;max-width:320px;}
+.login-divider-line{flex:1;height:1px;background:var(--border);}
+.login-divider-text{font-size:11px;color:var(--text3);}
+.login-email-wrap{width:100%;max-width:320px;}
+.login-input{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--white);font-size:14px;color:var(--text);outline:none;font-family:inherit;margin-bottom:8px;transition:border-color 0.15s;}
+.login-input:focus{border-color:var(--text);}
+.login-email-btn{width:100%;padding:14px;border-radius:14px;background:var(--text);color:var(--white);border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:opacity 0.15s;}
+.login-email-btn:active{opacity:0.8;}
+.login-toggle{font-size:12px;color:var(--text3);text-align:center;cursor:pointer;padding:8px;}
+.login-toggle span{color:var(--gold);font-weight:600;}
+.login-skip{margin-top:20px;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;}
+/* USER MENU */
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#0f0e0c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:none;}
+.user-menu-sheet .user-info{display:flex;align-items:center;gap:12px;padding:4px 0 20px;}
+.user-menu-sheet .u-avatar-lg{width:48px;height:48px;border-radius:50%;background:var(--gold);color:#0f0e0c;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.user-menu-sheet .u-name{font-size:16px;font-weight:700;color:var(--text);}
+.user-menu-sheet .u-email{font-size:12px;color:var(--text3);margin-top:2px;}
+.user-menu-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--bg2);cursor:pointer;}
+.user-menu-row:last-of-type{border-bottom:none;}
+.user-menu-ico{font-size:18px;width:24px;text-align:center;}
+.user-menu-label{font-size:14px;font-weight:500;color:var(--text);flex:1;}
+.user-menu-row.danger .user-menu-label{color:var(--red);}
+/* AI QUOTA BADGE */
+.ai-quota-box{margin:12px 14px 0;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.ai-quota-left .aq-title{font-size:13px;font-weight:700;color:var(--text);}
+.ai-quota-left .aq-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.ai-quota-pills{display:flex;gap:4px;}
+.ai-quota-pill{width:18px;height:18px;border-radius:5px;background:var(--border);}
+.ai-quota-pill.used{background:var(--gold);}
+.ai-watch-ad-btn{padding:8px 14px;border-radius:10px;background:var(--gold-bg);border:1.5px solid var(--gold);color:#8a6a1a;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
+[data-theme="dark"] .ai-watch-ad-btn{color:var(--gold);}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-logo">₩</div>
+  <div class="login-title">머니세이버</div>
+  <div class="login-sub">스마트한 용돈·지출 관리<br>계정으로 어느 기기에서나 사용하세요</div>
+
+  <button class="login-btn" onclick="loginWith('google')">
+    <div class="login-btn-ico">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    </div>
+    <div class="login-btn-text">Google로 계속하기</div>
+  </button>
+
+  <button class="login-btn" onclick="loginWith('apple')" style="background:var(--text);color:var(--white);border-color:var(--text);">
+    <div class="login-btn-ico">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+    </div>
+    <div class="login-btn-text">Apple로 계속하기</div>
+  </button>
+
+  <div class="login-divider" style="width:100%;max-width:320px;">
+    <div class="login-divider-line"></div>
+    <div class="login-divider-text">또는</div>
+    <div class="login-divider-line"></div>
+  </div>
+
+  <div class="login-email-wrap" id="emailWrap">
+    <input class="login-input" type="email" id="loginEmail" placeholder="이메일 주소">
+    <input class="login-input" type="password" id="loginPw" placeholder="비밀번호" style="display:none" id="loginPw">
+    <button class="login-email-btn" id="emailBtn" onclick="loginEmailStep()">이메일로 계속하기</button>
+    <div class="login-toggle" id="loginToggle">계정이 없으신가요? <span onclick="toggleSignup()">회원가입</span></div>
+  </div>
+
+  <div class="login-skip" onclick="loginWith('guest')">로그인 없이 시작하기</div>
+</div>
+
+<!-- USER MENU OVERLAY -->
+<div class="overlay" id="userMenuOverlay" onclick="closeOverlay('userMenuOverlay',event)">
+  <div class="sheet user-menu-sheet">
+    <div class="sheet-handle"></div>
+    <div class="user-info">
+      <div class="u-avatar-lg" id="uAvatarLg">?</div>
+      <div>
+        <div class="u-name" id="uNameLg">사용자</div>
+        <div class="u-email" id="uEmailLg"></div>
+      </div>
+    </div>
+    <div class="user-menu-row" onclick="closeOverlay('userMenuOverlay');openPaywall()">
+      <div class="user-menu-ico">✦</div>
+      <div class="user-menu-label" id="premiumMenuLabel">프리미엄 업그레이드</div>
+    </div>
+    <div class="user-menu-row" onclick="closeOverlay('userMenuOverlay');toggleDark()">
+      <div class="user-menu-ico">🌙</div>
+      <div class="user-menu-label">다크모드 전환</div>
+    </div>
+    <div class="user-menu-row" onclick="closeOverlay('userMenuOverlay');exportCSV()">
+      <div class="user-menu-ico">📤</div>
+      <div class="user-menu-label">CSV 내보내기</div>
+    </div>
+    <div class="user-menu-row danger" onclick="logoutConfirm()">
+      <div class="user-menu-ico">🚪</div>
+      <div class="user-menu-label">로그아웃</div>
+    </div>
+  </div>
+</div>
+
 <div class="app">
   <div class="header">
     <div class="header-top">
@@ -276,10 +384,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <button class="month-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="darkBtn" onclick="toggleDark()">🌙</button>
-        <button class="icon-btn" onclick="exportCSV()">📤</button>
         <button class="icon-btn" onclick="openBudgetModal()">🎯</button>
         <button class="icon-btn" onclick="openCatModal()">⚙️</button>
+        <button class="user-avatar" id="userAvatarBtn" onclick="openUserMenu()">?</button>
       </div>
     </div>
     <div class="summary-strip">
@@ -398,10 +505,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="paywall-hero">
       <div class="paywall-ico">✦</div>
       <div class="paywall-title">머니세이버 프리미엄</div>
-      <div class="paywall-sub">광고 없이, AI 분석 무제한으로<br>더 스마트한 용돈·지출 관리를 시작하세요</div>
+      <div class="paywall-sub">광고 없이, AI 분석을 연 4회 사용하고<br>더 스마트한 용돈·지출 관리를 시작하세요</div>
     </div>
     <div class="feature-list">
-      <div class="feature-row"><div class="feature-ico">🤖</div><div><div class="ft-title">AI 월별 분석 무제한</div><div class="ft-sub">소비 패턴 분석 + 절약 제안 + 다음 달 예측</div></div></div>
+      <div class="feature-row"><div class="feature-ico">🤖</div><div><div class="ft-title">AI 월별 분석 연 4회</div><div class="ft-sub">소비 패턴 분석 + 절약 제안 + 다음 달 예측<br><span style="font-size:10px;color:var(--text3)">무료: 연 2회 / 프리미엄: 연 4회</span></div></div></div>
       <div class="feature-row"><div class="feature-ico">🚫</div><div><div class="ft-title">광고 완전 제거</div><div class="ft-sub">깔끔한 화면으로 집중해서 관리</div></div></div>
       <div class="feature-row"><div class="feature-ico">📊</div><div><div class="ft-title">상세 소비 리포트</div><div class="ft-sub">카테고리별 추세 및 비교 분석</div></div></div>
       <div class="feature-row"><div class="feature-ico">🎨</div><div><div class="ft-title">커스텀 카테고리 무제한</div><div class="ft-sub">나만의 항목 자유롭게 추가</div></div></div>
@@ -433,8 +540,13 @@ const now=new Date();
 let vY=now.getFullYear(),vM=now.getMonth();
 let transactions=[],budget={total:0,cats:{}},recurring=[],customCats=[];
 let editId=null,curType='expense',selCat='food',recurType='expense',recurCat='sub';
-let donutChart=null,isPremium=false,aiUsageCount=0;
-const AI_FREE_LIMIT=2;
+let donutChart=null,isPremium=false;
+// AI 분석 정책: 광고(무료) 연 2회 / 프리미엄 연 4회, 연도 기준 리셋
+const AI_LIMIT_FREE=2, AI_LIMIT_PREMIUM=4;
+let aiUsageData={year:new Date().getFullYear(),free:0,premium:0}; // {year, free, premium}
+// 로그인 상태
+let currentUser=null; // {name, email, provider, initials}
+let emailSignupMode=false;
 
 const ADS=['현명한 소비, 머니세이버로 시작하세요 💰','용돈 기입장도 이제 스마트하게 📊','AI가 월별 소비 패턴을 분석해 드려요 🤖','고정 지출을 등록하면 자동 관리돼요 ✨','프리미엄으로 광고 없이 사용하세요 ✦'];
 let adIdx=0;
@@ -453,20 +565,104 @@ async function loadAll(){
   const rc=await load('recurring',[]);if(Array.isArray(rc))recurring=rc;
   const cc=await load('customCats',[]);if(Array.isArray(cc)){customCats=cc;rebuildCats();}
   const pr=await load('isPremium',false);isPremium=!!pr;
-  const au=await load('aiUsage',0);if(typeof au==='number')aiUsageCount=au;
-  const dk=await load('darkmode',0);if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('darkBtn').textContent='☀️';document.getElementById('themeColor').setAttribute('content','#1c1b18');}
+  const au=await load('aiUsageData',null);
+  if(au&&typeof au==='object'){
+    // 연도 바뀌면 카운트 리셋
+    if(au.year===new Date().getFullYear()) aiUsageData=au;
+    else { aiUsageData={year:new Date().getFullYear(),free:0,premium:0}; await dbSet('aiUsageData',aiUsageData); }
+  }
+  const usr=await load('currentUser',null);if(usr)currentUser=usr;
+  const dk=await load('darkmode',0);if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
   updatePremiumUI();
 }
 async function saveAll(){try{await dbSet('transactions',transactions);await dbSet('budget',budget);await dbSet('recurring',recurring);}catch(e){alert('저장 실패!');}}
 
+// ── AUTH ──
+function loginWith(provider){
+  let user;
+  if(provider==='google'){
+    // 실제 구현: Google OAuth (expo-auth-session 또는 Firebase)
+    // 데모: 시뮬레이션
+    const name='Google 사용자'; const email='user@gmail.com';
+    user={name,email,provider:'google',initials:name[0].toUpperCase()};
+  } else if(provider==='apple'){
+    const name='Apple 사용자'; const email='user@icloud.com';
+    user={name,email,provider:'apple',initials:'A'};
+  } else if(provider==='email'){
+    const email=document.getElementById('loginEmail').value.trim();
+    const pw=document.getElementById('loginPw').value;
+    if(!email||!email.includes('@')){alert('올바른 이메일을 입력해주세요.');return;}
+    if(!pw||pw.length<6){alert('비밀번호는 6자 이상이어야 해요.');return;}
+    const name=email.split('@')[0];
+    user={name,email,provider:'email',initials:name[0].toUpperCase()};
+  } else {
+    // guest
+    user={name:'게스트',email:'',provider:'guest',initials:'G'};
+  }
+  finishLogin(user);
+}
+
+async function finishLogin(user){
+  currentUser=user;
+  await dbSet('currentUser',user);
+  document.getElementById('loginScreen').style.display='none';
+  updateUserUI();
+}
+
+function updateUserUI(){
+  if(!currentUser) return;
+  const ini=currentUser.initials||'?';
+  document.getElementById('userAvatarBtn').textContent=ini;
+  document.getElementById('uAvatarLg').textContent=ini;
+  document.getElementById('uNameLg').textContent=currentUser.name;
+  document.getElementById('uEmailLg').textContent=currentUser.email||(currentUser.provider==='guest'?'비로그인 게스트':'');
+  if(isPremium){
+    document.getElementById('premiumMenuLabel').textContent='프리미엄 이용 중 ✦';
+  }
+}
+
+function openUserMenu(){document.getElementById('userMenuOverlay').classList.add('open');}
+
+async function logoutConfirm(){
+  if(!confirm('로그아웃 하시겠어요?')) return;
+  closeOverlay('userMenuOverlay');
+  currentUser=null;
+  await dbSet('currentUser',null);
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('userAvatarBtn').textContent='?';
+}
+
+let emailStep=1;
+function loginEmailStep(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(emailStep===1){
+    if(!email||!email.includes('@')){alert('올바른 이메일을 입력해주세요.');return;}
+    document.getElementById('loginPw').style.display='block';
+    document.getElementById('emailBtn').textContent=emailSignupMode?'회원가입':'로그인';
+    emailStep=2;
+  } else {
+    loginWith('email');
+  }
+}
+
+function toggleSignup(){
+  emailSignupMode=!emailSignupMode;
+  document.getElementById('loginToggle').innerHTML=emailSignupMode
+    ?'이미 계정이 있으신가요? <span onclick="toggleSignup()">로그인</span>'
+    :'계정이 없으신가요? <span onclick="toggleSignup()">회원가입</span>';
+  document.getElementById('emailBtn').textContent=emailSignupMode?'회원가입하기':'이메일로 계속하기';
+  emailStep=1;
+  document.getElementById('loginPw').style.display='none';
+}
+
 // ── PREMIUM ──
-function updatePremiumUI(){document.getElementById('adBanner').style.display=isPremium?'none':'flex';}
+function updatePremiumUI(){document.getElementById('adBanner').style.display=isPremium?'none':'flex';if(currentUser)updateUserUI();}
 function openPaywall(){document.getElementById('paywallOverlay').classList.add('open');}
 async function purchasePremium(){
   if(confirm('₩4,900 결제하고 프리미엄을 시작할까요?\n\n(데모: 확인 클릭 시 바로 활성화)')){
     isPremium=true;await dbSet('isPremium',true);updatePremiumUI();
     document.getElementById('paywallOverlay').classList.remove('open');
-    alert('🎉 프리미엄 활성화!\n광고가 사라지고 AI 분석을 무제한 사용할 수 있어요.');
+    alert('🎉 프리미엄 활성화!\nAI 분석을 연 4회 사용할 수 있어요.');
     renderAITab();
   }
 }
@@ -584,19 +780,56 @@ function openCatDetail(catId){
 function renderRecur(){const el=document.getElementById('recurList');if(!recurring.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:20px">등록된 고정 항목이 없어요</div>';return;}el.innerHTML=recurring.map(r=>{const c=CMAP[r.cat]||CMAP.other;return `<div class="recur-item"><div class="tx-ico" style="background:${c.bg};width:38px;height:38px;border-radius:10px;font-size:17px">${c.icon}</div><div class="recur-info"><div class="recur-name">${r.name}</div><div class="recur-sub">${c.label} · 매월 ${r.day}일</div></div><div class="recur-right"><div class="recur-amt" style="color:${r.type==='income'?'var(--green)':'var(--red)'}">${r.type==='income'?'+':'-'}${fmt(r.amount)}</div></div><button class="recur-del" onclick="deleteRecur('${r.id}')">✕</button></div>`;}).join('');}
 
 // ── AI TAB ──
+function getAIQuota(){
+  const limit=isPremium?AI_LIMIT_PREMIUM:AI_LIMIT_FREE;
+  const used=isPremium?aiUsageData.premium:aiUsageData.free;
+  const remaining=Math.max(0,limit-used);
+  return {limit,used,remaining,canAnalyze:remaining>0};
+}
+
+function renderAIQuotaBox(){
+  const q=getAIQuota();
+  const pills=Array.from({length:q.limit},(_,i)=>`<div class="ai-quota-pill${i<q.used?' used':''}"></div>`).join('');
+  const typeLabel=isPremium?'프리미엄':'광고 시청';
+  const adBtn=(!isPremium&&q.remaining===0)?`<button class="ai-watch-ad-btn" onclick="watchAdForAnalysis()">광고 보기</button>`:'';
+  return `<div class="ai-quota-box">
+    <div class="ai-quota-left">
+      <div class="aq-title">올해 AI 분석 횟수</div>
+      <div class="aq-sub">${typeLabel} · ${q.used}/${q.limit}회 사용 · ${new Date().getFullYear()}년 리셋</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div class="ai-quota-pills">${pills}</div>
+      ${adBtn}
+    </div>
+  </div>`;
+}
+
 function renderAITab(){
   const el=document.getElementById('aiTabContent');
   const txs=monthTxs(),totalExp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),hasData=txs.length>0;
-  const freeRemaining=Math.max(0,AI_FREE_LIMIT-aiUsageCount);
-  const canAnalyze=isPremium||freeRemaining>0;
-  const premiumBanner=isPremium?'':`<div class="premium-banner" onclick="openPaywall()"><div class="premium-banner-ico">✦</div><div class="premium-banner-text"><div class="premium-banner-title">프리미엄으로 업그레이드</div><div class="premium-banner-sub">AI 분석 무제한 + 광고 제거 · ₩4,900</div></div><div class="premium-banner-arrow">›</div></div>`;
-  const usageNote=isPremium?'':`<div class="ai-usage-note">무료 분석 남은 횟수: <strong>${freeRemaining}회</strong> · <span style="color:var(--gold);cursor:pointer" onclick="openPaywall()">프리미엄으로 무제한 사용 →</span></div>`;
-  if(!hasData){el.innerHTML=`${premiumBanner}<div class="ai-hero"><div class="ai-hero-label">AI ANALYSIS ✦</div><div class="ai-hero-title">이번 달 지출을<br>AI가 분석해 드려요</div><div class="ai-hero-sub">내역을 추가하면 소비 패턴 분석,<br>절약 팁, 다음 달 예측까지 해 드릴게요</div></div><div style="text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;"><div style="font-size:36px;margin-bottom:10px">📒</div>내역을 먼저 추가해 보세요</div>`;return;}
-  el.innerHTML=`${premiumBanner}<div class="ai-hero"><div class="ai-hero-label">AI ANALYSIS ✦</div><div class="ai-hero-title">${vY}년 ${vM+1}월<br>소비 분석 리포트</div><div class="ai-hero-sub">총 ${txs.filter(t=>t.type==='expense').length}건 · ${fmt(totalExp)} 지출</div>${canAnalyze?`<button class="ai-analyze-btn" id="aiBtn" onclick="runAIAnalysis()">🤖 AI 분석 시작하기</button>`:`<button class="ai-analyze-btn" onclick="openPaywall()" style="background:rgba(255,255,255,0.15);color:white;">🔒 프리미엄으로 분석하기</button>`}</div>${usageNote}<div id="aiResultArea" class="ai-result-wrap"></div>`;
+  const q=getAIQuota();
+  const premiumBanner=isPremium?'':`<div class="premium-banner" onclick="openPaywall()"><div class="premium-banner-ico">✦</div><div class="premium-banner-text"><div class="premium-banner-title">프리미엄으로 업그레이드</div><div class="premium-banner-sub">AI 분석 연 4회 + 광고 제거 · ₩4,900</div></div><div class="premium-banner-arrow">›</div></div>`;
+  if(!hasData){
+    el.innerHTML=`${premiumBanner}${renderAIQuotaBox()}<div class="ai-hero"><div class="ai-hero-label">AI ANALYSIS ✦</div><div class="ai-hero-title">이번 달 지출을<br>AI가 분석해 드려요</div><div class="ai-hero-sub">내역을 추가하면 소비 패턴 분석,<br>절약 팁, 다음 달 예측까지 해 드릴게요</div></div><div style="text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;"><div style="font-size:36px;margin-bottom:10px">📒</div>내역을 먼저 추가해 보세요</div>`;
+    return;
+  }
+  const analyzeBtn=q.canAnalyze
+    ?`<button class="ai-analyze-btn" id="aiBtn" onclick="runAIAnalysis()">🤖 AI 분석 시작하기</button>`
+    :`<button class="ai-analyze-btn" onclick="openPaywall()" style="background:rgba(255,255,255,0.15);color:white;">🔒 횟수 소진 · 프리미엄으로 업그레이드</button>`;
+  el.innerHTML=`${premiumBanner}${renderAIQuotaBox()}<div class="ai-hero"><div class="ai-hero-label">AI ANALYSIS ✦</div><div class="ai-hero-title">${vY}년 ${vM+1}월<br>소비 분석 리포트</div><div class="ai-hero-sub">총 ${txs.filter(t=>t.type==='expense').length}건 · ${fmt(totalExp)} 지출</div>${analyzeBtn}</div><div id="aiResultArea" class="ai-result-wrap"></div>`;
+}
+
+// 광고 시청 후 1회 추가 (데모)
+function watchAdForAnalysis(){
+  if(confirm('광고를 시청하면 AI 분석 1회가 추가돼요.\n(데모: 확인 클릭 시 바로 추가)')){
+    aiUsageData.free=Math.max(0,aiUsageData.free-1);
+    dbSet('aiUsageData',aiUsageData);
+    renderAITab();
+  }
 }
 
 async function runAIAnalysis(){
-  if(!isPremium&&aiUsageCount>=AI_FREE_LIMIT){openPaywall();return;}
+  const _q=getAIQuota();if(!_q.canAnalyze){openPaywall();return;}
   const btn=document.getElementById('aiBtn');if(btn){btn.disabled=true;btn.textContent='분석 중...';}
   document.getElementById('aiResultArea').innerHTML=`<div class="ai-loading"><div class="ai-loading-spinner"></div><div style="font-size:13px">AI가 소비 패턴을 분석하고 있어요...</div></div>`;
   const txs=monthTxs(),expTxs=txs.filter(t=>t.type==='expense'),incTxs=txs.filter(t=>t.type==='income');
@@ -631,7 +864,13 @@ ${monthHistory.length>0?`- 최근 3개월 지출: ${monthHistory.join(', ')}`:''
     const text=data.content?.find(b=>b.type==='text')?.text||'분석에 실패했어요.';
     const sections=parseAISections(text);
     document.getElementById('aiResultArea').innerHTML=sections.map(s=>`<div class="ai-section"><div class="ai-section-header">${s.icon} ${s.title}</div><div class="ai-section-body">${formatAIText(s.body)}</div></div>`).join('');
-    if(!isPremium){aiUsageCount++;await dbSet('aiUsage',aiUsageCount);const nu=document.querySelector('.ai-usage-note');const rem=Math.max(0,AI_FREE_LIMIT-aiUsageCount);if(nu)nu.innerHTML=`무료 분석 남은 횟수: <strong>${rem}회</strong> · <span style="color:var(--gold);cursor:pointer" onclick="openPaywall()">프리미엄으로 무제한 사용 →</span>`;}
+    // 사용 횟수 업데이트
+    if(isPremium) aiUsageData.premium=Math.min(AI_LIMIT_PREMIUM,(aiUsageData.premium||0)+1);
+    else aiUsageData.free=Math.min(AI_LIMIT_FREE,(aiUsageData.free||0)+1);
+    await dbSet('aiUsageData',aiUsageData);
+    // 쿼터 박스 갱신
+    const qBox=document.querySelector('.ai-quota-box');
+    if(qBox) qBox.outerHTML=renderAIQuotaBox();
   }catch(e){document.getElementById('aiResultArea').innerHTML=`<div class="ai-section"><div class="ai-section-body" style="color:var(--red)">분석 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.</div></div>`;}
   if(btn){btn.disabled=false;btn.textContent='🔄 다시 분석하기';}
 }
@@ -649,7 +888,7 @@ function formatAIText(t){return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>'
 function render(){renderHeader();renderList();renderBudget();renderChart();renderRecur();}
 function changeMonth(d){vM+=d;if(vM<0){vM=11;vY--;}if(vM>11){vM=0;vY++;}render();}
 function switchTab(tab,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+tab).classList.add('active');if(tab==='chart')renderChart();if(tab==='ai')renderAITab();}
-function toggleDark(){const isDark=document.documentElement.getAttribute('data-theme')==='dark';if(isDark){document.documentElement.removeAttribute('data-theme');dbSet('darkmode',0).catch(()=>{});document.getElementById('darkBtn').textContent='🌙';document.getElementById('themeColor').setAttribute('content','#f7f6f3');}else{document.documentElement.setAttribute('data-theme','dark');dbSet('darkmode',1).catch(()=>{});document.getElementById('darkBtn').textContent='☀️';document.getElementById('themeColor').setAttribute('content','#1c1b18');}if(donutChart)renderChart();}
+function toggleDark(){const isDark=document.documentElement.getAttribute('data-theme')==='dark';if(isDark){document.documentElement.removeAttribute('data-theme');dbSet('darkmode',0).catch(()=>{});document.getElementById('themeColor').setAttribute('content','#f7f6f3');}else{document.documentElement.setAttribute('data-theme','dark');dbSet('darkmode',1).catch(()=>{});document.getElementById('themeColor').setAttribute('content','#1c1b18');}if(donutChart)renderChart();}
 function exportCSV(){const rows=[['날짜','유형','카테고리','메모','금액']];transactions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{const c=CMAP[t.cat]||CMAP.other;rows.push([t.date,t.type==='income'?'수입':'지출',c.label,t.memo||'',t.type==='income'?t.amount:-t.amount]);});const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`머니세이버_${new Date().toISOString().slice(0,10)}.csv`;a.click();}
 function catGrid(type,selId,gridId){const cats=type==='income'?CATS.filter(c=>c.catType==='income'||c.catType==='both'):CATS.filter(c=>c.catType!=='income');document.getElementById(gridId).innerHTML=cats.map(c=>`<button class="cat-btn ${selId===c.id?'sel':''}" onclick="${gridId==='catGrid'?`selectCat('${c.id}')`:`selectRecurCat('${c.id}')`}"><span class="ci">${c.icon}</span><span class="cl">${c.label}</span></button>`).join('');}
 function openAddModal(){editId=null;curType='expense';selCat='food';document.getElementById('sheetTitle').textContent='내역 추가';document.getElementById('amountInput').value='';document.getElementById('memoInput').value='';document.getElementById('dateInput').value=today();document.getElementById('btnExp').className='type-btn ae';document.getElementById('btnInc').className='type-btn';document.getElementById('deleteTxBtn').style.display='none';catGrid('expense',selCat,'catGrid');document.getElementById('addOverlay').classList.add('open');setTimeout(()=>document.getElementById('amountInput').focus(),300);}
@@ -671,6 +910,14 @@ async function init(){
   try{await openDB();await loadAll();}
   catch(e){try{const tx=localStorage.getItem('wb_tx_v3');if(tx)transactions=JSON.parse(tx)||[];const bg=localStorage.getItem('wb_bg_v3');if(bg)budget=JSON.parse(bg)||{total:0,cats:{}};const rc=localStorage.getItem('wb_rc_v1');if(rc)recurring=JSON.parse(rc)||[];}catch(e2){}}
   applyRecurring();render();
+  // 로그인 상태 확인
+  if(currentUser){
+    document.getElementById('loginScreen').style.display='none';
+    updateUserUI();
+  }
+  // 다크모드 적용
+  const dk=await (async()=>{try{return await dbGet('darkmode');}catch(e){return 0;}})();
+  if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
 }
 init();
 </script>
