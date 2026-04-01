@@ -9,6 +9,96 @@
 <meta name="theme-color" content="#0f0e0c" id="themeColor">
 <title>머니세이버</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script type="module" id="firebaseModule">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCnH3jAexzMxNgGhUqwqDM5_WWIeCKjfbU",
+  authDomain: "moneysaver-996e7.firebaseapp.com",
+  projectId: "moneysaver-996e7",
+  storageBucket: "moneysaver-996e7.firebasestorage.app",
+  messagingSenderId: "1050923784054",
+  appId: "1:1050923784054:web:d87aa3c785550d81f28c57",
+  measurementId: "G-VESVZQR0LX"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db_fs = getFirestore(app);
+
+// ── Firestore 저장/불러오기 ──
+async function fsSetUserData(uid, key, value) {
+  try {
+    await setDoc(doc(db_fs, 'users', uid, 'data', key), { value, updatedAt: serverTimestamp() }, { merge: true });
+  } catch(e) { console.error('fsSet error:', e); }
+}
+
+async function fsGetUserData(uid, key) {
+  try {
+    const snap = await getDoc(doc(db_fs, 'users', uid, 'data', key));
+    return snap.exists() ? snap.data().value : null;
+  } catch(e) { return null; }
+}
+
+async function fsSaveAll(uid) {
+  try {
+    const batch = writeBatch(db_fs);
+    const ref = (key) => doc(db_fs, 'users', uid, 'data', key);
+    batch.set(ref('transactions'), { value: window._transactions, updatedAt: serverTimestamp() });
+    batch.set(ref('budget'), { value: window._budget, updatedAt: serverTimestamp() });
+    batch.set(ref('recurring'), { value: window._recurring, updatedAt: serverTimestamp() });
+    await batch.commit();
+  } catch(e) { console.error('fsSaveAll error:', e); }
+}
+
+async function fsLoadAll(uid) {
+  const [tx, bg, rc, cc, pr, au] = await Promise.all([
+    fsGetUserData(uid, 'transactions'),
+    fsGetUserData(uid, 'budget'),
+    fsGetUserData(uid, 'recurring'),
+    fsGetUserData(uid, 'customCats'),
+    fsGetUserData(uid, 'isPremium'),
+    fsGetUserData(uid, 'aiUsageData'),
+  ]);
+  return { tx, bg, rc, cc, pr, au };
+}
+
+// ── 전역에 Firebase 함수 노출 ──
+window.fbAuth = auth;
+window.fbDb = db_fs;
+window.fbGoogleProvider = new GoogleAuthProvider();
+window.fbSignInGoogle = () => signInWithPopup(auth, window.fbGoogleProvider);
+window.fbSignInEmail = (email, pw) => signInWithEmailAndPassword(auth, email, pw);
+window.fbSignUpEmail = (email, pw) => createUserWithEmailAndPassword(auth, email, pw);
+window.fbSignOut = () => signOut(auth);
+window.fbOnAuthStateChanged = (cb) => onAuthStateChanged(auth, cb);
+window.fsSaveAll = fsSaveAll;
+window.fsLoadAll = fsLoadAll;
+window.fsSetUserData = fsSetUserData;
+window.fsGetUserData = fsGetUserData;
+
+// ── Firebase Auth 상태 감지 ──
+onAuthStateChanged(auth, async (firebaseUser) => {
+  if (firebaseUser) {
+    const user = {
+      uid: firebaseUser.uid,
+      name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+      email: firebaseUser.email,
+      photo: firebaseUser.photoURL,
+      provider: firebaseUser.providerData[0]?.providerId || 'email',
+      initials: (firebaseUser.displayName || firebaseUser.email)[0].toUpperCase()
+    };
+    window._pendingFirebaseUser = user;
+    if (window.onFirebaseLogin) window.onFirebaseLogin(user);
+  } else {
+    window._pendingFirebaseUser = null;
+    if (window.onFirebaseLogout) window.onFirebaseLogout();
+  }
+});
+</script>
 <script>
 (function() {
   const icon = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#0f0e0c"/><circle cx="256" cy="256" r="130" fill="none" stroke="#c9a84c" stroke-width="20"/><text x="256" y="300" font-family="serif" font-size="160" fill="#c9a84c" text-anchor="middle">₩</text></svg>')}`;
@@ -144,9 +234,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .type-btn{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;color:var(--text2);}
 .type-btn.ae{background:var(--red-bg);border-color:var(--red);color:var(--red);}
 .type-btn.ai{background:var(--green-bg);border-color:var(--green);color:var(--green);}
-.amount-box{background:var(--bg);border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;}
-.amount-box input{font-size:32px;font-weight:700;color:var(--text);border:none;background:transparent;text-align:center;width:100%;outline:none;font-family:inherit;letter-spacing:-1px;}
-.amount-box input::placeholder{color:var(--text3);}
+.amount-box{background:var(--bg);border-radius:16px;padding:18px 18px 14px;margin-bottom:14px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;}
+.amount-box-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.amount-box-row{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;}
+.amount-box-currency{font-size:22px;font-weight:700;color:var(--text2);flex-shrink:0;margin-top:2px;}
+.amount-box input{font-size:36px;font-weight:800;color:var(--text);border:none;background:transparent;text-align:center;width:100%;outline:none;font-family:inherit;letter-spacing:-1px;min-width:0;caret-color:var(--gold);}
+.amount-box input::placeholder{color:var(--border);}
+.amount-box-underline{height:2px;width:60%;background:var(--border);border-radius:1px;margin-top:2px;transition:background 0.2s,width 0.2s;}
+.amount-box:focus-within .amount-box-underline{background:var(--gold);width:80%;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:16px;}
 .cat-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:11px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all 0.15s;}
 .cat-btn .ci{font-size:20px;}
@@ -158,10 +253,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .field input,.field select{width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);font-size:14px;color:var(--text);outline:none;font-family:inherit;transition:border-color 0.15s,background 0.2s;}
 .field input:focus,.field select:focus{border-color:var(--text);}
 .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
-.btn-main{width:100%;padding:14px;border-radius:13px;background:var(--text);color:var(--white);border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;transition:opacity 0.15s;}
+.btn-main{width:100%;padding:13px;border-radius:12px;background:var(--text);color:var(--white);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;transition:opacity 0.15s;}
 .btn-main:active{opacity:0.8;}
-.btn-danger{width:100%;padding:12px;border-radius:13px;background:var(--red-bg);color:var(--red);border:1px solid;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
-.btn-secondary{width:100%;padding:12px;border-radius:13px;background:var(--bg);color:var(--text2);border:1px solid var(--border);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:8px;}
+.btn-danger{width:100%;padding:11px;border-radius:12px;background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px;transition:opacity 0.15s;}
+.btn-danger:active{opacity:0.8;}
+.btn-secondary{width:100%;padding:11px;border-radius:12px;background:var(--bg);color:var(--text2);border:1.5px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;transition:opacity 0.15s;}
+.btn-secondary:active{opacity:0.8;}
+.btn-cancel{width:100%;padding:11px;border-radius:12px;background:transparent;color:var(--text3);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:2px;transition:opacity 0.15s;}
+.btn-cancel:active{opacity:0.6;}
 .budget-field-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .bfr-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
 .bfr-label{font-size:13px;font-weight:500;flex:1;}
@@ -301,6 +400,33 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .ai-quota-pill.used{background:var(--gold);}
 .ai-watch-ad-btn{padding:8px 14px;border-radius:10px;background:var(--gold-bg);border:1.5px solid var(--gold);color:#8a6a1a;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
 [data-theme="dark"] .ai-watch-ad-btn{color:var(--gold);}
+
+/* ── MORE MENU ── */
+.more-menu-wrap{position:relative;}
+.more-menu-dropdown{position:fixed;right:12px;top:calc(52px + env(safe-area-inset-top,0px));background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:300;min-width:180px;overflow:hidden;animation:fadeIn 0.15s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.more-menu-item{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background 0.1s;font-size:14px;color:var(--text);font-weight:500;border-bottom:1px solid var(--bg2);}
+.more-menu-item:last-child{border-bottom:none;}
+.more-menu-item:active{background:var(--bg2);}
+.more-menu-item .mi-ico{font-size:16px;width:20px;text-align:center;}
+.more-menu-backdrop{position:fixed;inset:0;z-index:299;}
+/* TYPE TOGGLE compact */
+.type-toggle{display:flex;gap:6px;margin-bottom:12px;}
+.type-btn{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;color:var(--text2);}
+.type-btn.ae{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.type-btn.ai{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+/* CAT GRID compact */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.cat-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all 0.15s;}
+.cat-btn .ci{font-size:18px;}
+.cat-btn .cl{font-size:9px;color:var(--text3);font-family:inherit;font-weight:500;}
+.cat-btn.sel{border-color:var(--text);background:var(--text);}
+.cat-btn.sel .cl{color:#aaa;}
+
+/* ADD MODAL LAYOUT */
+.cat-label-row{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.memo-date-row{display:flex;gap:10px;align-items:flex-start;}
+.memo-date-row .field input{padding:9px 11px;font-size:13px;}
 </style>
 </head>
 <body>
@@ -322,7 +448,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="login-btn-ico">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
     </div>
-    <div class="login-btn-text">Apple로 계속하기</div>
+    <div class="login-btn-text">Apple로 계속하기 <span style="font-size:10px;opacity:0.6">(앱 출시 후 지원)</span></div>
   </button>
 
   <div class="login-divider" style="width:100%;max-width:320px;">
@@ -339,6 +465,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 
   <div class="login-skip" onclick="loginWith('guest')">로그인 없이 시작하기</div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:2000;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="loadingMsg" style="font-size:14px;color:var(--text2);font-weight:500;">데이터를 불러오는 중...</div>
 </div>
 
 <!-- USER MENU OVERLAY -->
@@ -364,6 +496,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="user-menu-ico">📤</div>
       <div class="user-menu-label">CSV 내보내기</div>
     </div>
+    <div class="user-menu-row" onclick="closeOverlay('userMenuOverlay');syncNow()">
+      <div class="user-menu-ico">☁️</div>
+      <div class="user-menu-label" id="syncLabel">클라우드 동기화</div>
+    </div>
     <div class="user-menu-row danger" onclick="logoutConfirm()">
       <div class="user-menu-ico">🚪</div>
       <div class="user-menu-label">로그아웃</div>
@@ -371,6 +507,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
+
+<!-- MORE MENU DROPDOWN -->
+<div id="moreMenuDropdown" class="more-menu-dropdown" style="display:none">
+  <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('ai')">
+    <span class="mi-ico">🤖</span> AI 분석
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();openCatModal()">
+    <span class="mi-ico">⚙️</span> 카테고리 설정
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();toggleDark()">
+    <span class="mi-ico" id="darkIco">🌙</span> <span id="darkLabel">다크모드</span>
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();exportCSV()">
+    <span class="mi-ico">📤</span> CSV 내보내기
+  </div>
+</div>
+<div id="moreMenuBackdrop" class="more-menu-backdrop" style="display:none" onclick="closeMoreMenu()"></div>
 <div class="app">
   <div class="header">
     <div class="header-top">
@@ -384,8 +537,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <button class="month-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" onclick="openBudgetModal()">🎯</button>
-        <button class="icon-btn" onclick="openCatModal()">⚙️</button>
+        <button class="icon-btn" onclick="openBudgetModal()" title="예산">🎯</button>
+        <div class="more-menu-wrap">
+          <button class="icon-btn" onclick="toggleMoreMenu(event)" id="moreBtn" title="더보기">⋯</button>
+        </div>
         <button class="user-avatar" id="userAvatarBtn" onclick="openUserMenu()">?</button>
       </div>
     </div>
@@ -431,17 +586,33 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="overlay" id="addOverlay" onclick="closeOverlay('addOverlay',event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title" id="sheetTitle">내역 추가</div>
-    <div class="type-toggle">
-      <button class="type-btn ae" id="btnExp" onclick="setType('expense')">지출</button>
-      <button class="type-btn" id="btnInc" onclick="setType('income')">수입</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="sheet-title" id="sheetTitle" style="margin-bottom:0">내역 추가</div>
+      <div class="type-toggle" style="margin-bottom:0;flex-shrink:0;width:auto;gap:5px;">
+        <button class="type-btn ae" id="btnExp" onclick="setType('expense')" style="flex:none;padding:7px 14px;font-size:12px;">지출</button>
+        <button class="type-btn" id="btnInc" onclick="setType('income')" style="flex:none;padding:7px 14px;font-size:12px;">수입</button>
+      </div>
     </div>
-    <div class="amount-box"><input type="number" id="amountInput" placeholder="금액" inputmode="numeric"></div>
+    <div class="cat-label-row">카테고리</div>
     <div class="cat-grid" id="catGrid"></div>
-    <div class="field"><label>메모</label><input type="text" id="memoInput" placeholder="어디서 썼나요?"></div>
-    <div class="field"><label>날짜</label><input type="date" id="dateInput"></div>
+    <div class="amount-box">
+      <div class="amount-box-label">금액</div>
+      <div class="amount-box-row">
+        <span class="amount-box-currency">₩</span>
+        <input type="number" id="amountInput" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="amount-box-underline"></div>
+    </div>
+    <div class="memo-date-row">
+      <div class="field" style="flex:1;margin-bottom:0"><label>메모</label><input type="text" id="memoInput" placeholder="어디서 썼나요?"></div>
+      <div class="field" style="width:130px;margin-bottom:0"><label>날짜</label><input type="date" id="dateInput"></div>
+    </div>
+    <div style="height:12px"></div>
     <button class="btn-main" onclick="submitTx()">저장</button>
-    <button class="btn-danger" id="deleteTxBtn" style="display:none" onclick="deleteTx()">삭제</button>
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="btn-danger" id="deleteTxBtn" style="display:none;flex:1" onclick="deleteTx()">삭제</button>
+      <button class="btn-cancel" style="flex:1" onclick="closeOverlay('addOverlay')">취소</button>
+    </div>
   </div>
 </div>
 
@@ -455,7 +626,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="modal-section">카테고리별 예산</div>
     <div id="catBudgetFields"></div>
     <button class="btn-main" onclick="saveBudget()">저장</button>
-    <button class="btn-secondary" onclick="closeOverlay('budgetOverlay')">취소</button>
+    <button class="btn-cancel" onclick="closeOverlay('budgetOverlay')">취소</button>
   </div>
 </div>
 
@@ -463,17 +634,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="overlay" id="recurOverlay" onclick="closeOverlay('recurOverlay',event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">고정 항목 추가</div>
+    <div class="sheet-title" id="recurSheetTitle">고정 항목 추가</div>
     <div class="type-toggle">
       <button class="type-btn ae" id="rBtnExp" onclick="setRecurType('expense')">지출</button>
       <button class="type-btn" id="rBtnInc" onclick="setRecurType('income')">수입</button>
     </div>
-    <div class="amount-box"><input type="number" id="rAmountInput" placeholder="금액" inputmode="numeric"></div>
+    <div class="amount-box">
+      <span class="amount-box-currency">₩</span>
+      <input type="number" id="rAmountInput" placeholder="0" inputmode="numeric">
+    </div>
     <div class="cat-grid" id="rCatGrid"></div>
     <div class="field"><label>항목 이름</label><input type="text" id="rNameInput" placeholder="예: 넷플릭스, 월세, 용돈"></div>
     <div class="field"><label>매월 등록일</label><select id="rDayInput"><option value="1">1일</option><option value="5">5일</option><option value="10">10일</option><option value="15">15일</option><option value="20">20일</option><option value="25">25일</option></select></div>
     <button class="btn-main" onclick="saveRecur()">저장</button>
-    <button class="btn-secondary" onclick="closeOverlay('recurOverlay')">취소</button>
+    <button class="btn-danger" id="deleteRecurBtn" style="display:none" onclick="deleteCurrentRecur()">이 고정 항목 삭제</button>
+    <button class="btn-cancel" onclick="closeOverlay('recurOverlay')">취소</button>
   </div>
 </div>
 
@@ -541,12 +716,14 @@ let vY=now.getFullYear(),vM=now.getMonth();
 let transactions=[],budget={total:0,cats:{}},recurring=[],customCats=[];
 let editId=null,curType='expense',selCat='food',recurType='expense',recurCat='sub';
 let donutChart=null,isPremium=false;
+let editRecurId=null;
 // AI 분석 정책: 광고(무료) 연 2회 / 프리미엄 연 4회, 연도 기준 리셋
 const AI_LIMIT_FREE=2, AI_LIMIT_PREMIUM=4;
 let aiUsageData={year:new Date().getFullYear(),free:0,premium:0}; // {year, free, premium}
 // 로그인 상태
-let currentUser=null; // {name, email, provider, initials}
+let currentUser=null; // {uid, name, email, provider, initials, photo}
 let emailSignupMode=false;
+let firebaseReady=false;
 
 const ADS=['현명한 소비, 머니세이버로 시작하세요 💰','용돈 기입장도 이제 스마트하게 📊','AI가 월별 소비 패턴을 분석해 드려요 🤖','고정 지출을 등록하면 자동 관리돼요 ✨','프리미엄으로 광고 없이 사용하세요 ✦'];
 let adIdx=0;
@@ -575,59 +752,166 @@ async function loadAll(){
   const dk=await load('darkmode',0);if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
   updatePremiumUI();
 }
-async function saveAll(){try{await dbSet('transactions',transactions);await dbSet('budget',budget);await dbSet('recurring',recurring);}catch(e){alert('저장 실패!');}}
+async function saveAll(){
+  // 로컬 저장 (항상)
+  try{await dbSet('transactions',transactions);await dbSet('budget',budget);await dbSet('recurring',recurring);}catch(e){console.error('local save error:',e);}
+  // 클라우드 저장 (로그인된 경우)
+  if(currentUser&&currentUser.uid&&window.fsSaveAll){
+    window._transactions=transactions;
+    window._budget=budget;
+    window._recurring=recurring;
+    window.fsSaveAll(currentUser.uid).catch(e=>console.error('cloud save error:',e));
+  }
+}
 
 // ── AUTH ──
-function loginWith(provider){
-  let user;
+function showLoading(msg='데이터를 불러오는 중...'){
+  const el=document.getElementById('loadingOverlay');
+  document.getElementById('loadingMsg').textContent=msg;
+  el.style.display='flex';
+}
+function hideLoading(){document.getElementById('loadingOverlay').style.display='none';}
+
+async function loginWith(provider){
   if(provider==='google'){
-    // 실제 구현: Google OAuth (expo-auth-session 또는 Firebase)
-    // 데모: 시뮬레이션
-    const name='Google 사용자'; const email='user@gmail.com';
-    user={name,email,provider:'google',initials:name[0].toUpperCase()};
+    if(!window.fbSignInGoogle){alert('Firebase 로딩 중입니다. 잠시 후 다시 시도해주세요.');return;}
+    try{
+      showLoading('Google 로그인 중...');
+      await window.fbSignInGoogle();
+      // onAuthStateChanged가 자동으로 처리
+    } catch(e){
+      hideLoading();
+      if(e.code==='auth/popup-closed-by-user') return;
+      alert('Google 로그인 실패: '+e.message);
+    }
   } else if(provider==='apple'){
-    const name='Apple 사용자'; const email='user@icloud.com';
-    user={name,email,provider:'apple',initials:'A'};
+    alert('Apple 로그인은 앱 출시 후 지원 예정이에요.
+이메일이나 Google로 로그인해 주세요.');
   } else if(provider==='email'){
     const email=document.getElementById('loginEmail').value.trim();
     const pw=document.getElementById('loginPw').value;
     if(!email||!email.includes('@')){alert('올바른 이메일을 입력해주세요.');return;}
     if(!pw||pw.length<6){alert('비밀번호는 6자 이상이어야 해요.');return;}
-    const name=email.split('@')[0];
-    user={name,email,provider:'email',initials:name[0].toUpperCase()};
+    try{
+      showLoading(emailSignupMode?'계정 생성 중...':'로그인 중...');
+      if(emailSignupMode) await window.fbSignUpEmail(email,pw);
+      else await window.fbSignInEmail(email,pw);
+      // onAuthStateChanged가 자동으로 처리
+    } catch(e){
+      hideLoading();
+      const msg={
+        'auth/user-not-found':'등록되지 않은 이메일이에요.',
+        'auth/wrong-password':'비밀번호가 틀렸어요.',
+        'auth/email-already-in-use':'이미 사용 중인 이메일이에요.',
+        'auth/weak-password':'비밀번호가 너무 짧아요 (6자 이상).',
+        'auth/invalid-email':'올바른 이메일 형식이 아니에요.',
+        'auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않아요.',
+      }[e.code]||e.message;
+      alert(msg);
+    }
   } else {
-    // guest
-    user={name:'게스트',email:'',provider:'guest',initials:'G'};
+    // 게스트 로그인 (로컬만)
+    await finishLogin({uid:null,name:'게스트',email:'',provider:'guest',initials:'G'});
   }
-  finishLogin(user);
 }
 
 async function finishLogin(user){
   currentUser=user;
-  await dbSet('currentUser',user);
+  // 로컬에 현재 유저 저장 (UID 제외, 보안상)
+  await dbSet('currentUser',{name:user.name,email:user.email,provider:user.provider,initials:user.initials});
+  
+  // 클라우드 데이터 불러오기 (로그인 유저만)
+  if(user.uid && window.fsLoadAll){
+    showLoading('클라우드에서 데이터를 불러오는 중...');
+    try{
+      const cloud=await window.fsLoadAll(user.uid);
+      let migrated=false;
+      // 클라우드 데이터가 있으면 우선 사용, 없으면 로컬 데이터를 클라우드에 업로드
+      if(cloud.tx&&Array.isArray(cloud.tx)&&cloud.tx.length>0){
+        transactions=cloud.tx;
+        if(cloud.bg&&typeof cloud.bg==='object') budget=cloud.bg;
+        if(cloud.rc&&Array.isArray(cloud.rc)) recurring=cloud.rc;
+        if(cloud.cc&&Array.isArray(cloud.cc)){customCats=cloud.cc;rebuildCats();}
+        if(cloud.pr) isPremium=!!cloud.pr;
+        if(cloud.au&&cloud.au.year===new Date().getFullYear()) aiUsageData=cloud.au;
+        // 로컬에도 동기화
+        await dbSet('transactions',transactions);
+        await dbSet('budget',budget);
+        await dbSet('recurring',recurring);
+      } else if(transactions.length>0){
+        // 로컬 데이터를 클라우드로 업로드 (마이그레이션)
+        window._transactions=transactions;
+        window._budget=budget;
+        window._recurring=recurring;
+        await window.fsSaveAll(user.uid);
+        migrated=true;
+      }
+      if(migrated) console.log('✅ 로컬 데이터를 클라우드로 마이그레이션 완료');
+    } catch(e){ console.error('cloud load error:',e); }
+  }
+  
+  hideLoading();
   document.getElementById('loginScreen').style.display='none';
   updateUserUI();
+  updatePremiumUI();
+  applyRecurring();
+  render();
+}
+
+// Firebase Auth 콜백 등록
+window.onFirebaseLogin = async (fbUser) => {
+  if(currentUser&&currentUser.uid===fbUser.uid) return; // 이미 처리됨
+  await finishLogin(fbUser);
+};
+window.onFirebaseLogout = () => {
+  currentUser=null;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('userAvatarBtn').textContent='?';
+};
+
+async function syncNow(){
+  if(!currentUser||!currentUser.uid){alert('로그인 후 사용할 수 있어요.');return;}
+  const label=document.getElementById('syncLabel');
+  label.textContent='동기화 중...';
+  try{
+    window._transactions=transactions;
+    window._budget=budget;
+    window._recurring=recurring;
+    await window.fsSaveAll(currentUser.uid);
+    label.textContent='✅ 동기화 완료';
+    setTimeout(()=>{label.textContent='클라우드 동기화';},2000);
+  } catch(e){
+    label.textContent='❌ 동기화 실패';
+    setTimeout(()=>{label.textContent='클라우드 동기화';},2000);
+  }
 }
 
 function updateUserUI(){
   if(!currentUser) return;
   const ini=currentUser.initials||'?';
-  document.getElementById('userAvatarBtn').textContent=ini;
-  document.getElementById('uAvatarLg').textContent=ini;
+  const avatarBtn=document.getElementById('userAvatarBtn');
+  const avatarLg=document.getElementById('uAvatarLg');
+  if(currentUser.photo){
+    avatarBtn.innerHTML=`<img src="${currentUser.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${ini}'">`;
+    avatarLg.innerHTML=`<img src="${currentUser.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${ini}'">`;
+  } else {
+    avatarBtn.textContent=ini;
+    avatarLg.textContent=ini;
+  }
   document.getElementById('uNameLg').textContent=currentUser.name;
   document.getElementById('uEmailLg').textContent=currentUser.email||(currentUser.provider==='guest'?'비로그인 게스트':'');
-  if(isPremium){
-    document.getElementById('premiumMenuLabel').textContent='프리미엄 이용 중 ✦';
-  }
+  if(isPremium) document.getElementById('premiumMenuLabel').textContent='프리미엄 이용 중 ✦';
 }
 
 function openUserMenu(){document.getElementById('userMenuOverlay').classList.add('open');}
 
 async function logoutConfirm(){
-  if(!confirm('로그아웃 하시겠어요?')) return;
+  if(!confirm('로그아웃 하시겠어요?\n로컬 데이터는 유지됩니다.')) return;
   closeOverlay('userMenuOverlay');
   currentUser=null;
   await dbSet('currentUser',null);
+  // Firebase 로그아웃
+  if(window.fbSignOut) try{await window.fbSignOut();}catch(e){}
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('userAvatarBtn').textContent='?';
 }
@@ -777,7 +1061,7 @@ function openCatDetail(catId){
 }
 
 // ── RENDER RECURRING ──
-function renderRecur(){const el=document.getElementById('recurList');if(!recurring.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:20px">등록된 고정 항목이 없어요</div>';return;}el.innerHTML=recurring.map(r=>{const c=CMAP[r.cat]||CMAP.other;return `<div class="recur-item"><div class="tx-ico" style="background:${c.bg};width:38px;height:38px;border-radius:10px;font-size:17px">${c.icon}</div><div class="recur-info"><div class="recur-name">${r.name}</div><div class="recur-sub">${c.label} · 매월 ${r.day}일</div></div><div class="recur-right"><div class="recur-amt" style="color:${r.type==='income'?'var(--green)':'var(--red)'}">${r.type==='income'?'+':'-'}${fmt(r.amount)}</div></div><button class="recur-del" onclick="deleteRecur('${r.id}')">✕</button></div>`;}).join('');}
+function renderRecur(){const el=document.getElementById('recurList');if(!recurring.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:20px">등록된 고정 항목이 없어요</div>';return;}el.innerHTML=recurring.map(r=>{const c=CMAP[r.cat]||CMAP.other;return `<div class="recur-item"><div class="tx-ico" style="background:${c.bg};width:38px;height:38px;border-radius:10px;font-size:17px">${c.icon}</div><div class="recur-info"><div class="recur-name">${r.name}</div><div class="recur-sub">${c.label} · 매월 ${r.day}일</div></div><div class="recur-right"><div class="recur-amt" style="color:${r.type==='income'?'var(--green)':'var(--red)'}">${r.type==='income'?'+':'-'}${fmt(r.amount)}</div></div><button class="recur-del" onclick="openEditRecurModal('${r.id}')" title="수정">✏️</button></div>`;}).join('');}
 
 // ── AI TAB ──
 function getAIQuota(){
@@ -884,40 +1168,184 @@ function parseAISections(text){
 }
 function formatAIText(t){return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/₩[\d,]+/g,m=>`<mark style="background:var(--gold-bg);color:#8a6a1a;border-radius:3px;padding:0 3px">${m}</mark>`).replace(/\n/g,'<br>');}
 
+
+// ── MORE MENU ──
+function toggleMoreMenu(e){
+  e.stopPropagation();
+  const d=document.getElementById('moreMenuDropdown');
+  const b=document.getElementById('moreMenuBackdrop');
+  const isOpen=d.style.display!=='none';
+  d.style.display=isOpen?'none':'block';
+  b.style.display=isOpen?'none':'block';
+}
+function closeMoreMenu(){
+  document.getElementById('moreMenuDropdown').style.display='none';
+  document.getElementById('moreMenuBackdrop').style.display='none';
+}
+function switchTabByName(name){
+  const tabs=document.querySelectorAll('.tab');
+  const names=['list','budget','chart','recur','ai'];
+  const idx=names.indexOf(name);
+  if(idx>=0) switchTab(name,tabs[idx]);
+}
+
 // ── RENDER ALL ──
 function render(){renderHeader();renderList();renderBudget();renderChart();renderRecur();}
 function changeMonth(d){vM+=d;if(vM<0){vM=11;vY--;}if(vM>11){vM=0;vY++;}render();}
 function switchTab(tab,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+tab).classList.add('active');if(tab==='chart')renderChart();if(tab==='ai')renderAITab();}
-function toggleDark(){const isDark=document.documentElement.getAttribute('data-theme')==='dark';if(isDark){document.documentElement.removeAttribute('data-theme');dbSet('darkmode',0).catch(()=>{});document.getElementById('themeColor').setAttribute('content','#f7f6f3');}else{document.documentElement.setAttribute('data-theme','dark');dbSet('darkmode',1).catch(()=>{});document.getElementById('themeColor').setAttribute('content','#1c1b18');}if(donutChart)renderChart();}
+function toggleDark(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  if(isDark){
+    document.documentElement.removeAttribute('data-theme');
+    dbSet('darkmode',0).catch(()=>{});
+    document.getElementById('themeColor').setAttribute('content','#f7f6f3');
+    const ico=document.getElementById('darkIco');const lbl=document.getElementById('darkLabel');
+    if(ico)ico.textContent='🌙';if(lbl)lbl.textContent='다크모드';
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    dbSet('darkmode',1).catch(()=>{});
+    document.getElementById('themeColor').setAttribute('content','#1c1b18');
+    const ico=document.getElementById('darkIco');const lbl=document.getElementById('darkLabel');
+    if(ico)ico.textContent='☀️';if(lbl)lbl.textContent='라이트모드';
+  }
+  if(donutChart)renderChart();
+}
 function exportCSV(){const rows=[['날짜','유형','카테고리','메모','금액']];transactions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{const c=CMAP[t.cat]||CMAP.other;rows.push([t.date,t.type==='income'?'수입':'지출',c.label,t.memo||'',t.type==='income'?t.amount:-t.amount]);});const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`머니세이버_${new Date().toISOString().slice(0,10)}.csv`;a.click();}
 function catGrid(type,selId,gridId){const cats=type==='income'?CATS.filter(c=>c.catType==='income'||c.catType==='both'):CATS.filter(c=>c.catType!=='income');document.getElementById(gridId).innerHTML=cats.map(c=>`<button class="cat-btn ${selId===c.id?'sel':''}" onclick="${gridId==='catGrid'?`selectCat('${c.id}')`:`selectRecurCat('${c.id}')`}"><span class="ci">${c.icon}</span><span class="cl">${c.label}</span></button>`).join('');}
-function openAddModal(){editId=null;curType='expense';selCat='food';document.getElementById('sheetTitle').textContent='내역 추가';document.getElementById('amountInput').value='';document.getElementById('memoInput').value='';document.getElementById('dateInput').value=today();document.getElementById('btnExp').className='type-btn ae';document.getElementById('btnInc').className='type-btn';document.getElementById('deleteTxBtn').style.display='none';catGrid('expense',selCat,'catGrid');document.getElementById('addOverlay').classList.add('open');setTimeout(()=>document.getElementById('amountInput').focus(),300);}
-function openEditModal(id){const t=transactions.find(x=>x.id===id);if(!t)return;editId=id;curType=t.type;selCat=t.cat;document.getElementById('sheetTitle').textContent='내역 수정';document.getElementById('amountInput').value=t.amount;document.getElementById('memoInput').value=t.memo;document.getElementById('dateInput').value=t.date;document.getElementById('btnExp').className='type-btn'+(t.type==='expense'?' ae':'');document.getElementById('btnInc').className='type-btn'+(t.type==='income'?' ai':'');document.getElementById('deleteTxBtn').style.display='block';catGrid(t.type,selCat,'catGrid');document.getElementById('addOverlay').classList.add('open');}
+function openAddModal(){
+  editId=null;curType='expense';selCat='food';
+  document.getElementById('sheetTitle').textContent='내역 추가';
+  document.getElementById('amountInput').value='';
+  document.getElementById('memoInput').value='';
+  document.getElementById('dateInput').value=today();
+  document.getElementById('btnExp').className='type-btn ae';
+  document.getElementById('btnInc').className='type-btn';
+  document.getElementById('deleteTxBtn').style.display='none';
+  document.getElementById('deleteTxBtn').style.flex='';
+  catGrid('expense',selCat,'catGrid');
+  document.getElementById('addOverlay').classList.add('open');
+  setTimeout(()=>{
+    const inp=document.getElementById('amountInput');
+    inp.focus();inp.select();
+  },200);
+}
+function openEditModal(id){
+  const t=transactions.find(x=>x.id===id);if(!t)return;
+  editId=id;curType=t.type;selCat=t.cat;
+  document.getElementById('sheetTitle').textContent='내역 수정';
+  document.getElementById('amountInput').value=t.amount;
+  document.getElementById('memoInput').value=t.memo;
+  document.getElementById('dateInput').value=t.date;
+  document.getElementById('btnExp').className='type-btn'+(t.type==='expense'?' ae':'');
+  document.getElementById('btnInc').className='type-btn'+(t.type==='income'?' ai':'');
+  const delBtn=document.getElementById('deleteTxBtn');
+  delBtn.style.display='block';delBtn.style.flex='1';
+  catGrid(t.type,selCat,'catGrid');
+  document.getElementById('addOverlay').classList.add('open');
+  setTimeout(()=>{
+    const inp=document.getElementById('amountInput');
+    inp.focus();inp.select();
+  },200);
+}
 function setType(type){curType=type;if(type==='expense'){document.getElementById('btnExp').className='type-btn ae';document.getElementById('btnInc').className='type-btn';if(selCat==='income')selCat='food';}else{document.getElementById('btnExp').className='type-btn';document.getElementById('btnInc').className='type-btn ai';selCat='income';}catGrid(type,selCat,'catGrid');}
 function selectCat(id){selCat=id;catGrid(curType,selCat,'catGrid');}
 async function submitTx(){const amount=parseFloat(document.getElementById('amountInput').value);const memo=document.getElementById('memoInput').value.trim();const date=document.getElementById('dateInput').value;if(!amount||amount<=0){alert('금액을 입력해주세요.');return;}if(!date){alert('날짜를 선택해주세요.');return;}if(editId){const i=transactions.findIndex(t=>t.id===editId);if(i>=0)transactions[i]={...transactions[i],amount,memo,date,type:curType,cat:selCat};}else{transactions.push({id:Date.now().toString(),amount,memo,date,type:curType,cat:selCat});}await saveAll();document.getElementById('addOverlay').classList.remove('open');render();}
 async function deleteTx(){if(!confirm('이 내역을 삭제할까요?'))return;transactions=transactions.filter(t=>t.id!==editId);await saveAll();document.getElementById('addOverlay').classList.remove('open');render();}
 function openBudgetModal(){document.getElementById('totalBudgetInput').value=budget.total||'';document.getElementById('catBudgetFields').innerHTML=CATS.filter(c=>c.catType!=='income').map(c=>`<div class="budget-field-row"><div class="bfr-icon" style="background:${c.bg}">${c.icon}</div><div class="bfr-label">${c.label}</div><input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0" value="${budget.cats[c.id]||''}"></div>`).join('');document.getElementById('budgetOverlay').classList.add('open');}
 async function saveBudget(){budget.total=parseFloat(document.getElementById('totalBudgetInput').value)||0;budget.cats={};CATS.filter(c=>c.catType!=='income').forEach(c=>{const v=parseFloat(document.getElementById('bc_'+c.id).value)||0;if(v>0)budget.cats[c.id]=v;});await saveAll();document.getElementById('budgetOverlay').classList.remove('open');render();}
-function openRecurModal(){recurType='expense';recurCat='sub';document.getElementById('rBtnExp').className='type-btn ae';document.getElementById('rBtnInc').className='type-btn';document.getElementById('rAmountInput').value='';document.getElementById('rNameInput').value='';catGrid('expense',recurCat,'rCatGrid');document.getElementById('recurOverlay').classList.add('open');}
+function openRecurModal(){
+  editRecurId=null;
+  recurType='expense';recurCat='sub';
+  document.getElementById('recurSheetTitle').textContent='고정 항목 추가';
+  document.getElementById('rBtnExp').className='type-btn ae';
+  document.getElementById('rBtnInc').className='type-btn';
+  document.getElementById('rAmountInput').value='';
+  document.getElementById('rNameInput').value='';
+  document.getElementById('deleteRecurBtn').style.display='none';
+  catGrid('expense',recurCat,'rCatGrid');
+  document.getElementById('recurOverlay').classList.add('open');
+}
+function openEditRecurModal(id){
+  const r=recurring.find(x=>x.id===id);if(!r)return;
+  editRecurId=id;
+  recurType=r.type;recurCat=r.cat;
+  document.getElementById('recurSheetTitle').textContent='고정 항목 수정';
+  document.getElementById('rAmountInput').value=r.amount;
+  document.getElementById('rNameInput').value=r.name;
+  document.getElementById('deleteRecurBtn').style.display='block';
+  const daySelect=document.getElementById('rDayInput');
+  Array.from(daySelect.options).forEach(o=>{o.selected=parseInt(o.value)===r.day;});
+  if(r.type==='expense'){document.getElementById('rBtnExp').className='type-btn ae';document.getElementById('rBtnInc').className='type-btn';}
+  else{document.getElementById('rBtnExp').className='type-btn';document.getElementById('rBtnInc').className='type-btn ai';}
+  catGrid(r.type,recurCat,'rCatGrid');
+  document.getElementById('recurOverlay').classList.add('open');
+}
+async function deleteCurrentRecur(){
+  if(!editRecurId)return;
+  if(!confirm('이 고정 항목을 삭제할까요?'))return;
+  recurring=recurring.filter(r=>r.id!==editRecurId);
+  await saveAll();
+  document.getElementById('recurOverlay').classList.remove('open');
+  renderRecur();
+}
 function setRecurType(type){recurType=type;if(type==='expense'){document.getElementById('rBtnExp').className='type-btn ae';document.getElementById('rBtnInc').className='type-btn';if(recurCat==='income')recurCat='sub';}else{document.getElementById('rBtnExp').className='type-btn';document.getElementById('rBtnInc').className='type-btn ai';recurCat='income';}catGrid(type,recurCat,'rCatGrid');}
 function selectRecurCat(id){recurCat=id;catGrid(recurType,recurCat,'rCatGrid');}
-async function saveRecur(){const amount=parseFloat(document.getElementById('rAmountInput').value);const name=document.getElementById('rNameInput').value.trim();const day=parseInt(document.getElementById('rDayInput').value);if(!amount||amount<=0){alert('금액을 입력해주세요.');return;}if(!name){alert('항목 이름을 입력해주세요.');return;}recurring.push({id:Date.now().toString(),amount,name,day,type:recurType,cat:recurCat});await saveAll();applyRecurring();document.getElementById('recurOverlay').classList.remove('open');render();}
+async function saveRecur(){
+  const amount=parseFloat(document.getElementById('rAmountInput').value);
+  const name=document.getElementById('rNameInput').value.trim();
+  const day=parseInt(document.getElementById('rDayInput').value);
+  if(!amount||amount<=0){alert('금액을 입력해주세요.');return;}
+  if(!name){alert('항목 이름을 입력해주세요.');return;}
+  if(editRecurId){
+    // 수정
+    const idx=recurring.findIndex(r=>r.id===editRecurId);
+    if(idx>=0) recurring[idx]={...recurring[idx],amount,name,day,type:recurType,cat:recurCat};
+  } else {
+    // 추가
+    recurring.push({id:Date.now().toString(),amount,name,day,type:recurType,cat:recurCat});
+  }
+  await saveAll();
+  applyRecurring();
+  document.getElementById('recurOverlay').classList.remove('open');
+  render();
+}
 async function deleteRecur(id){if(!confirm('이 고정 항목을 삭제할까요?'))return;recurring=recurring.filter(r=>r.id!==id);await saveAll();renderRecur();}
 function closeOverlay(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
 
 async function init(){
-  try{await openDB();await loadAll();}
-  catch(e){try{const tx=localStorage.getItem('wb_tx_v3');if(tx)transactions=JSON.parse(tx)||[];const bg=localStorage.getItem('wb_bg_v3');if(bg)budget=JSON.parse(bg)||{total:0,cats:{}};const rc=localStorage.getItem('wb_rc_v1');if(rc)recurring=JSON.parse(rc)||[];}catch(e2){}}
-  applyRecurring();render();
-  // 로그인 상태 확인
-  if(currentUser){
-    document.getElementById('loginScreen').style.display='none';
-    updateUserUI();
+  // 다크모드 먼저 (로딩 화면도 다크로)
+  try{
+    await openDB();
+    const dk=await dbGet('darkmode');
+    if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
+    await loadAll();
+  } catch(e){
+    try{
+      const tx=localStorage.getItem('wb_tx_v3');if(tx)transactions=JSON.parse(tx)||[];
+      const bg=localStorage.getItem('wb_bg_v3');if(bg)budget=JSON.parse(bg)||{total:0,cats:{}};
+      const rc=localStorage.getItem('wb_rc_v1');if(rc)recurring=JSON.parse(rc)||[];
+    }catch(e2){}
   }
-  // 다크모드 적용
-  const dk=await (async()=>{try{return await dbGet('darkmode');}catch(e){return 0;}})();
-  if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
+  applyRecurring();
+  render();
+  
+  // Firebase가 이미 로그인된 사용자 감지할 때까지 잠시 대기
+  // (onAuthStateChanged가 비동기로 실행되므로)
+  const savedUser=await (async()=>{try{return await dbGet('currentUser');}catch(e){return null;}})();
+  
+  setTimeout(()=>{
+    // Firebase 콜백이 아직 안 왔으면 로그인 화면 표시
+    if(!currentUser){
+      if(savedUser&&savedUser.provider==='guest'){
+        // 게스트는 바로 진입
+        currentUser=savedUser;
+        document.getElementById('loginScreen').style.display='none';
+        updateUserUI();
+      } else {
+        document.getElementById('loginScreen').style.display='flex';
+      }
+    }
+  }, 1500); // Firebase SDK 로딩 대기
 }
 init();
 </script>
