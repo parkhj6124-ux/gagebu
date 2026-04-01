@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="머니세이버">
 <meta name="theme-color" content="#0f0e0c" id="themeColor">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <title>머니세이버</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- Firebase SDK -->
@@ -24,6 +27,18 @@ const firebaseConfig = {
   appId: "1:1050923784054:web:d87aa3c785550d81f28c57",
   measurementId: "G-VESVZQR0LX"
 };
+
+// 허용된 도메인에서만 Firebase 초기화
+const ALLOWED_DOMAINS = [
+  'localhost',
+  'parkhj6124-ux.github.io',
+  'moneysaver-996e7.firebaseapp.com',
+  'moneysaver-996e7.web.app'
+];
+const currentDomain = window.location.hostname;
+if (!ALLOWED_DOMAINS.includes(currentDomain)) {
+  console.error('⛔ 허용되지 않은 도메인:', currentDomain);
+}
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -146,9 +161,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .summary-label{font-size:9px;color:var(--text3);letter-spacing:0.3px;margin-bottom:2px;font-weight:500;}
 .summary-value{font-size:13px;font-weight:700;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .s-income{color:var(--green);} .s-expense{color:var(--red);}
-.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);padding:0 6px;flex-shrink:0;transition:background 0.2s;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{flex:1;padding:10px 2px;font-size:10px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all 0.2s;white-space:nowrap;min-width:44px;}
+.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);padding:0;flex-shrink:0;transition:background 0.2s;}
+.tab{flex:1;padding:11px 4px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all 0.2s;white-space:nowrap;text-align:center;}
 .tab.active{color:var(--text);border-bottom-color:var(--gold);font-weight:700;}
 .ad-banner{margin:6px 12px 0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:6px;}
 .ad-label{font-size:9px;color:var(--text3);letter-spacing:0.5px;background:var(--border);padding:1px 4px;border-radius:3px;flex-shrink:0;}
@@ -510,8 +524,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <!-- MORE MENU DROPDOWN -->
 <div id="moreMenuDropdown" class="more-menu-dropdown" style="display:none">
-  <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('ai')">
-    <span class="mi-ico">🤖</span> AI 분석
+  <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('budget')">
+    <span class="mi-ico">🎯</span> 예산 설정
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('recur')">
+    <span class="mi-ico">🔁</span> 고정 지출/수입
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();openRecurModal()">
+    <span class="mi-ico">➕</span> 고정 항목 추가
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();openCatModal()">
     <span class="mi-ico">⚙️</span> 카테고리 설정
@@ -537,7 +557,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <button class="month-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" onclick="openBudgetModal()" title="예산">🎯</button>
         <div class="more-menu-wrap">
           <button class="icon-btn" onclick="toggleMoreMenu(event)" id="moreBtn" title="더보기">⋯</button>
         </div>
@@ -555,7 +574,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <button class="tab active" onclick="switchTab('list',this)">내역</button>
     <button class="tab" onclick="switchTab('budget',this)">예산</button>
     <button class="tab" onclick="switchTab('chart',this)">통계</button>
-    <button class="tab" onclick="switchTab('recur',this)">고정</button>
     <button class="tab" onclick="switchTab('ai',this)">AI 분석 ✦</button>
   </div>
 
@@ -735,32 +753,72 @@ function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,
 function dbGet(k){return new Promise((res,rej)=>{const tx=db.transaction('store','readonly');const r=tx.objectStore('store').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function dbSet(k,v){return new Promise((res,rej)=>{const tx=db.transaction('store','readwrite');const r=tx.objectStore('store').put(v,k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
 
-async function loadAll(){
-  const load=async(k,def)=>{try{const v=await dbGet(k);return v!==undefined?v:def;}catch(e){return def;}};
-  const tx=await load('transactions',[]);if(Array.isArray(tx))transactions=tx;
-  const bg=await load('budget',{total:0,cats:{}});if(bg&&typeof bg==='object')budget=bg;
-  const rc=await load('recurring',[]);if(Array.isArray(rc))recurring=rc;
-  const cc=await load('customCats',[]);if(Array.isArray(cc)){customCats=cc;rebuildCats();}
-  const pr=await load('isPremium',false);isPremium=!!pr;
-  const au=await load('aiUsageData',null);
-  if(au&&typeof au==='object'){
-    // 연도 바뀌면 카운트 리셋
-    if(au.year===new Date().getFullYear()) aiUsageData=au;
-    else { aiUsageData={year:new Date().getFullYear(),free:0,premium:0}; await dbSet('aiUsageData',aiUsageData); }
+async function loadAll() {
+  // 안전한 로컬 DB 읽기 헬퍼
+  const safeGet = async (key, fallback) => {
+    try {
+      const val = await dbGet(key);
+      return val !== undefined ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  // 데이터 로드
+  const tx = await safeGet('transactions', []);
+  if (Array.isArray(tx)) transactions = tx;
+
+  const bg = await safeGet('budget', { total: 0, cats: {} });
+  if (bg && typeof bg === 'object') budget = bg;
+
+  const rc = await safeGet('recurring', []);
+  if (Array.isArray(rc)) recurring = rc;
+
+  const cc = await safeGet('customCats', []);
+  if (Array.isArray(cc)) { customCats = cc; rebuildCats(); }
+
+  // 프리미엄
+  const pr = await safeGet('isPremium', false);
+  isPremium = !!pr;
+
+  // AI 사용 횟수 (연도 바뀌면 리셋)
+  const au = await safeGet('aiUsageData', null);
+  if (au && typeof au === 'object') {
+    if (au.year === now.getFullYear()) {
+      aiUsageData = au;
+    } else {
+      // 새해 리셋
+      aiUsageData = { year: now.getFullYear(), free: 0, premium: 0 };
+      await dbSet('aiUsageData', aiUsageData);
+    }
   }
-  const usr=await load('currentUser',null);if(usr)currentUser=usr;
-  const dk=await load('darkmode',0);if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
+
+  // 다크모드
+  const dk = await safeGet('darkmode', 0);
+  if (dk === 1) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeColor').setAttribute('content', '#1c1b18');
+  }
+
   updatePremiumUI();
 }
-async function saveAll(){
-  // 로컬 저장 (항상)
-  try{await dbSet('transactions',transactions);await dbSet('budget',budget);await dbSet('recurring',recurring);}catch(e){console.error('local save error:',e);}
-  // 클라우드 저장 (로그인된 경우)
-  if(currentUser&&currentUser.uid&&window.fsSaveAll){
-    window._transactions=transactions;
-    window._budget=budget;
-    window._recurring=recurring;
-    window.fsSaveAll(currentUser.uid).catch(e=>console.error('cloud save error:',e));
+async function saveAll() {
+  // 1. 로컬 저장 (항상 먼저)
+  try {
+    await dbSet('transactions', transactions);
+    await dbSet('budget', budget);
+    await dbSet('recurring', recurring);
+  } catch (e) {
+    console.error('[DB] 로컬 저장 실패:', e);
+  }
+
+  // 2. 클라우드 저장 (로그인 시 비동기 백그라운드)
+  if (currentUser?.uid && window.fsSaveAll) {
+    window._transactions = transactions;
+    window._budget = budget;
+    window._recurring = recurring;
+    window.fsSaveAll(currentUser.uid)
+      .catch(e => console.error('[Firestore] 클라우드 저장 실패:', e));
   }
 }
 
@@ -819,13 +877,12 @@ async function finishLogin(user){
   // 로컬에 현재 유저 저장 (UID 제외, 보안상)
   await dbSet('currentUser',{name:user.name,email:user.email,provider:user.provider,initials:user.initials});
   
-  // 클라우드 데이터 불러오기 (로그인 유저만)
+  // 클라우드 데이터 불러오기 (로그인 유저만) — 8초 타임아웃
   if(user.uid && window.fsLoadAll){
     showLoading('클라우드에서 데이터를 불러오는 중...');
     try{
-      const cloud=await window.fsLoadAll(user.uid);
-      let migrated=false;
-      // 클라우드 데이터가 있으면 우선 사용, 없으면 로컬 데이터를 클라우드에 업로드
+      const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));
+      const cloud = await Promise.race([window.fsLoadAll(user.uid), timeout]);
       if(cloud.tx&&Array.isArray(cloud.tx)&&cloud.tx.length>0){
         transactions=cloud.tx;
         if(cloud.bg&&typeof cloud.bg==='object') budget=cloud.bg;
@@ -833,22 +890,20 @@ async function finishLogin(user){
         if(cloud.cc&&Array.isArray(cloud.cc)){customCats=cloud.cc;rebuildCats();}
         if(cloud.pr) isPremium=!!cloud.pr;
         if(cloud.au&&cloud.au.year===new Date().getFullYear()) aiUsageData=cloud.au;
-        // 로컬에도 동기화
         await dbSet('transactions',transactions);
         await dbSet('budget',budget);
         await dbSet('recurring',recurring);
       } else if(transactions.length>0){
-        // 로컬 데이터를 클라우드로 업로드 (마이그레이션)
         window._transactions=transactions;
         window._budget=budget;
         window._recurring=recurring;
-        await window.fsSaveAll(user.uid);
-        migrated=true;
+        window.fsSaveAll(user.uid).catch(e=>console.warn('migration:',e));
       }
-      if(migrated) console.log('✅ 로컬 데이터를 클라우드로 마이그레이션 완료');
-    } catch(e){ console.error('cloud load error:',e); }
+    } catch(e){
+      console.warn('클라우드 로딩 건너뜀 (로컬 데이터로 진행):', e.message);
+    }
   }
-  
+  // 에러/타임아웃 상관없이 무조건 앱 진입
   hideLoading();
   document.getElementById('loginScreen').style.display='none';
   updateUserUI();
@@ -971,11 +1026,40 @@ async function confirmEditCat(id){const inp=document.getElementById('cedit_'+id)
 async function deleteCat(id){const hasUsed=transactions.some(t=>t.cat===id);if(hasUsed){if(!confirm('이 카테고리 사용 내역이 있어요.\n삭제하면 "기타"로 변경됩니다. 계속할까요?'))return;transactions=transactions.map(t=>t.cat===id?{...t,cat:'other'}:t);await saveAll();}else{if(!confirm('이 카테고리를 삭제할까요?'))return;}customCats=customCats.filter(c=>c.id!==id);const idx=CATS.findIndex(c=>c.id===id);if(idx>=0)CATS.splice(idx,1);delete CMAP[id];await saveCustomCats();renderCatMgr();render();}
 async function addNewCat(){const icon=document.getElementById('newCatEmoji').textContent.trim();const label=document.getElementById('newCatName').value.trim();const catType=document.getElementById('newCatType').value;if(!label){alert('카테고리 이름을 입력해주세요.');return;}if(CATS.find(c=>c.label===label)){alert('이미 같은 이름이 있어요.');return;}const ci=CATS.length%BAR_C.length;const nc={id:'custom_'+Date.now(),icon,label,bg:BG_C[ci],bar:BAR_C[ci],builtin:false,catType};CATS.push(nc);CMAP[nc.id]=nc;customCats.push(nc);await saveCustomCats();document.getElementById('newCatName').value='';document.getElementById('newCatEmoji').textContent='📦';renderCatMgr();render();}
 
-// ── HELPERS ──
-function mk(y,m){return `${y}-${String(m+1).padStart(2,'0')}`;}
-function fmt(n){return '₩'+Math.abs(Math.round(n)).toLocaleString('ko-KR');}
-function today(){return new Date().toISOString().split('T')[0];}
-function monthTxs(){const k=mk(vY,vM);return transactions.filter(t=>t.date.startsWith(k));}
+// ══════════════════════════════════════════
+// 유틸리티 함수
+// ══════════════════════════════════════════
+
+/** YYYY-MM 형식 반환 */
+function mk(y, m) {
+  return `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+/** 금액 포맷 (₩1,234) */
+function fmt(n) {
+  return '₩' + Math.abs(Math.round(n)).toLocaleString('ko-KR');
+}
+
+/** 오늘 날짜 YYYY-MM-DD */
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+/** 현재 뷰 월의 거래 내역 */
+function monthTxs() {
+  const key = mk(vY, vM);
+  return transactions.filter(t => t.date.startsWith(key));
+}
+
+/** 지출 합계 */
+function sumExp(txs) {
+  return txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+}
+
+/** 수입 합계 */
+function sumInc(txs) {
+  return txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+}
 
 // ── RECURRING ──
 async function applyRecurring(){
@@ -985,15 +1069,34 @@ async function applyRecurring(){
   if(added>0)await saveAll();
 }
 
-// ── RENDER HEADER ──
-function renderHeader(){
-  document.getElementById('monthLabel').textContent=`${vY}년 ${vM+1}월`;
-  const txs=monthTxs(),inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  document.getElementById('sumIncome').textContent=fmt(inc);
-  document.getElementById('sumExpense').textContent=fmt(exp);
-  const bEl=document.getElementById('sumBalance'),lblEl=document.getElementById('sumBalanceLabel');
-  if(budget.total>0){const bal=budget.total-exp;bEl.textContent=(bal<0?'-':'')+fmt(bal);bEl.style.color=bal<0?'var(--red)':bal<=budget.total*0.2?'var(--orange)':'var(--green)';lblEl.textContent='예산잔액';}
-  else{const bal=inc-exp;bEl.textContent=fmt(bal);bEl.style.color=bal<0?'var(--red)':bal>0?'var(--green)':'var(--text)';lblEl.textContent='잔액';}
+// ══════════════════════════════════════════
+// 렌더링 함수
+// ══════════════════════════════════════════
+
+function renderHeader() {
+  const txs = monthTxs();
+  const inc = sumInc(txs);
+  const exp = sumExp(txs);
+
+  document.getElementById('monthLabel').textContent = `${vY}년 ${vM + 1}월`;
+  document.getElementById('sumIncome').textContent = fmt(inc);
+  document.getElementById('sumExpense').textContent = fmt(exp);
+
+  const balEl = document.getElementById('sumBalance');
+  const lblEl = document.getElementById('sumBalanceLabel');
+
+  if (budget.total > 0) {
+    const bal = budget.total - exp;
+    const color = bal < 0 ? 'var(--red)' : bal <= budget.total * 0.2 ? 'var(--orange)' : 'var(--green)';
+    balEl.textContent = (bal < 0 ? '-' : '') + fmt(bal);
+    balEl.style.color = color;
+    lblEl.textContent = '예산잔액';
+  } else {
+    const bal = inc - exp;
+    balEl.textContent = fmt(bal);
+    balEl.style.color = bal < 0 ? 'var(--red)' : bal > 0 ? 'var(--green)' : 'var(--text)';
+    lblEl.textContent = '잔액';
+  }
 }
 
 // ── RENDER LIST ──
@@ -1184,16 +1287,30 @@ function closeMoreMenu(){
   if(b) b.style.display='none';
 }
 function switchTabByName(name){
+  // 탭바에 없는 패널(budget, recur)도 직접 전환
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('tab-'+name);
+  if(panel) panel.classList.add('active');
+  // 탭바에 있는 경우 활성 표시
+  const tabNames=['list','budget','chart','ai'];
+  const tabIdx=tabNames.indexOf(name);
   const tabs=document.querySelectorAll('.tab');
-  const names=['list','budget','chart','recur','ai'];
-  const idx=names.indexOf(name);
-  if(idx>=0) switchTab(name,tabs[idx]);
+  if(tabIdx>=0&&tabs[tabIdx]) tabs[tabIdx].classList.add('active');
+  if(name==='chart') renderChart();
+  if(name==='ai') renderAITab();
 }
 
 // ── RENDER ALL ──
-function render(){renderHeader();renderList();renderBudget();renderChart();renderRecur();}
+function render() {
+  try { renderHeader(); } catch (e) { console.error('[render] header:', e); }
+  try { renderList(); } catch (e) { console.error('[render] list:', e); }
+  try { renderBudget(); } catch (e) { console.error('[render] budget:', e); }
+  try { renderChart(); } catch (e) { console.error('[render] chart:', e); }
+  try { renderRecur(); } catch (e) { console.error('[render] recur:', e); }
+}
 function changeMonth(d){vM+=d;if(vM<0){vM=11;vY--;}if(vM>11){vM=0;vY++;}render();}
-function switchTab(tab,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+tab).classList.add('active');if(tab==='chart')renderChart();if(tab==='ai')renderAITab();}
+function switchTab(tab,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));if(btn)btn.classList.add('active');const panel=document.getElementById('tab-'+tab);if(panel)panel.classList.add('active');if(tab==='chart')renderChart();if(tab==='ai')renderAITab();}
 function toggleDark(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   if(isDark){
@@ -1250,8 +1367,53 @@ function openEditModal(id){
 }
 function setType(type){curType=type;if(type==='expense'){document.getElementById('btnExp').className='type-btn ae';document.getElementById('btnInc').className='type-btn';if(selCat==='income')selCat='food';}else{document.getElementById('btnExp').className='type-btn';document.getElementById('btnInc').className='type-btn ai';selCat='income';}catGrid(type,selCat,'catGrid');}
 function selectCat(id){selCat=id;catGrid(curType,selCat,'catGrid');}
-async function submitTx(){const amount=parseFloat(document.getElementById('amountInput').value);const memo=document.getElementById('memoInput').value.trim();const date=document.getElementById('dateInput').value;if(!amount||amount<=0){alert('금액을 입력해주세요.');return;}if(!date){alert('날짜를 선택해주세요.');return;}if(editId){const i=transactions.findIndex(t=>t.id===editId);if(i>=0)transactions[i]={...transactions[i],amount,memo,date,type:curType,cat:selCat};}else{transactions.push({id:Date.now().toString(),amount,memo,date,type:curType,cat:selCat});}await saveAll();document.getElementById('addOverlay').classList.remove('open');render();}
-async function deleteTx(){if(!confirm('이 내역을 삭제할까요?'))return;transactions=transactions.filter(t=>t.id!==editId);await saveAll();document.getElementById('addOverlay').classList.remove('open');render();}
+async function submitTx() {
+  const amount = parseFloat(document.getElementById('amountInput').value);
+  const memo = document.getElementById('memoInput').value.trim();
+  const date = document.getElementById('dateInput').value;
+
+  // 입력 검증
+  if (!amount || amount <= 0 || isNaN(amount)) {
+    alert('올바른 금액을 입력해주세요.');
+    document.getElementById('amountInput').focus();
+    return;
+  }
+  if (amount > 1_000_000_000) {
+    alert('금액이 너무 커요. (최대 10억)');
+    return;
+  }
+  if (!date) {
+    alert('날짜를 선택해주세요.');
+    return;
+  }
+
+  if (editId) {
+    const idx = transactions.findIndex(t => t.id === editId);
+    if (idx >= 0) {
+      transactions[idx] = { ...transactions[idx], amount, memo, date, type: curType, cat: selCat };
+    }
+  } else {
+    transactions.push({
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      amount, memo, date,
+      type: curType,
+      cat: selCat
+    });
+  }
+
+  await saveAll();
+  document.getElementById('addOverlay').classList.remove('open');
+  render();
+}
+async function deleteTx() {
+  if (!editId) return;
+  if (!confirm('이 내역을 삭제할까요?\n삭제 후 복구할 수 없어요.')) return;
+  transactions = transactions.filter(t => t.id !== editId);
+  editId = null;
+  await saveAll();
+  document.getElementById('addOverlay').classList.remove('open');
+  render();
+}
 function openBudgetModal(){document.getElementById('totalBudgetInput').value=budget.total||'';document.getElementById('catBudgetFields').innerHTML=CATS.filter(c=>c.catType!=='income').map(c=>`<div class="budget-field-row"><div class="bfr-icon" style="background:${c.bg}">${c.icon}</div><div class="bfr-label">${c.label}</div><input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0" value="${budget.cats[c.id]||''}"></div>`).join('');document.getElementById('budgetOverlay').classList.add('open');}
 async function saveBudget(){budget.total=parseFloat(document.getElementById('totalBudgetInput').value)||0;budget.cats={};CATS.filter(c=>c.catType!=='income').forEach(c=>{const v=parseFloat(document.getElementById('bc_'+c.id).value)||0;if(v>0)budget.cats[c.id]=v;});await saveAll();document.getElementById('budgetOverlay').classList.remove('open');render();}
 function openRecurModal(){
@@ -1311,44 +1473,50 @@ async function saveRecur(){
   render();
 }
 async function deleteRecur(id){if(!confirm('이 고정 항목을 삭제할까요?'))return;recurring=recurring.filter(r=>r.id!==id);await saveAll();renderRecur();}
-function closeOverlay(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
+function closeOverlay(id, e) {
+  // e가 있으면 배경 클릭만 닫힘 (시트 내부 클릭은 무시)
+  if (e && e.target !== document.getElementById(id)) return;
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
 
-async function init(){
-  // 다크모드 먼저 (로딩 화면도 다크로)
-  try{
+// ══════════════════════════════════════════
+// 앱 초기화
+// ══════════════════════════════════════════
+async function init() {
+  // 1. IndexedDB 열기 + 데이터 로드
+  try {
     await openDB();
-    const dk=await dbGet('darkmode');
-    if(dk===1){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeColor').setAttribute('content','#1c1b18');}
     await loadAll();
-  } catch(e){
-    try{
-      const tx=localStorage.getItem('wb_tx_v3');if(tx)transactions=JSON.parse(tx)||[];
-      const bg=localStorage.getItem('wb_bg_v3');if(bg)budget=JSON.parse(bg)||{total:0,cats:{}};
-      const rc=localStorage.getItem('wb_rc_v1');if(rc)recurring=JSON.parse(rc)||[];
-    }catch(e2){}
+  } catch (e) {
+    console.error('[init] DB 초기화 실패, 빈 상태로 시작:', e);
   }
+
+  // 2. 고정 항목 자동 적용
   applyRecurring();
+
+  // 3. 초기 렌더링
   render();
-  
-  // Firebase가 이미 로그인된 사용자 감지할 때까지 잠시 대기
-  // (onAuthStateChanged가 비동기로 실행되므로)
-  const savedUser=await (async()=>{try{return await dbGet('currentUser');}catch(e){return null;}})();
-  
-  // Firebase onAuthStateChanged 대기 (모듈 로딩 완료 후 실행됨)
-  // 게스트는 바로 진입
-  if(savedUser&&savedUser.provider==='guest'){
-    currentUser=savedUser;
-    document.getElementById('loginScreen').style.display='none';
+
+  // 4. 로그인 상태 확인
+  let savedUser = null;
+  try { savedUser = await dbGet('currentUser'); } catch {}
+
+  if (savedUser?.provider === 'guest') {
+    // 게스트: 바로 앱 진입
+    currentUser = savedUser;
+    document.getElementById('loginScreen').style.display = 'none';
     updateUserUI();
   } else {
-    // Firebase가 로그인 상태 확인할 때까지 잠시 대기
-    setTimeout(()=>{
-      if(!currentUser){
-        document.getElementById('loginScreen').style.display='flex';
+    // Firebase onAuthStateChanged 대기 (최대 1초)
+    setTimeout(() => {
+      if (!currentUser) {
+        document.getElementById('loginScreen').style.display = 'flex';
       }
-    }, 800);
+    }, 1000);
   }
 }
+
 init();
 </script>
 <!-- CAT DETAIL OVERLAY -->
