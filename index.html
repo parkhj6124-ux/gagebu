@@ -441,6 +441,32 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .cat-label-row{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
 .memo-date-row{display:flex;gap:10px;align-items:flex-start;}
 .memo-date-row .field input{padding:9px 11px;font-size:13px;}
+
+/* ── NOTIFICATION SETTINGS ── */
+.notif-sheet-section { margin-bottom: 20px; }
+.notif-section-title { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.notif-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--bg2); }
+.notif-row:last-child { border-bottom: none; }
+.notif-row-left { display: flex; align-items: center; gap: 12px; }
+.notif-row-ico { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
+.notif-row-info .nr-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.notif-row-info .nr-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+/* 토글 스위치 */
+.sw { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw-slider { position: absolute; inset: 0; background: var(--border); border-radius: 14px; cursor: pointer; transition: 0.25s; }
+.sw-slider::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.sw input:checked + .sw-slider { background: var(--green); }
+.sw input:checked + .sw-slider::before { transform: translateX(20px); }
+/* 시간 선택 */
+.notif-time-wrap { display: flex; align-items: center; gap: 8px; }
+.notif-time-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
+.notif-time-btn:focus-within { border-color: var(--text); }
+.notif-time-btn input[type=time] { border: none; background: transparent; font-size: 15px; font-weight: 700; color: var(--text); font-family: inherit; outline: none; cursor: pointer; width: 80px; }
+.notif-perm-banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 12px; margin-bottom: 16px; }
+.notif-perm-banner .npb-ico { font-size: 20px; flex-shrink: 0; }
+.notif-perm-banner .npb-text { font-size: 12px; color: var(--text2); line-height: 1.5; flex: 1; }
+.notif-perm-banner .npb-btn { padding: 6px 12px; background: var(--gold); border: none; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0f0e0c; cursor: pointer; font-family: inherit; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -535,6 +561,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();openCatModal()">
     <span class="mi-ico">⚙️</span> 카테고리 설정
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();openNotifModal()">
+    <span class="mi-ico">🔔</span> 알림 설정
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();toggleDark()">
     <span class="mi-ico" id="darkIco">🌙</span> <span id="darkLabel">다크모드</span>
@@ -688,6 +717,105 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <button class="btn-main" onclick="addNewCat()">+ 추가</button>
     <button class="btn-secondary" onclick="closeOverlay('catOverlay')">닫기</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION OVERLAY -->
+<div class="overlay" id="notifOverlay" onclick="closeOverlay('notifOverlay',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🔔 알림 설정</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:-10px;margin-bottom:16px;line-height:1.6;">매일 지출 기록을 잊지 않도록<br>원하는 시간에 알림을 받을 수 있어요</div>
+
+    <!-- 권한 배너 (필요 시 표시) -->
+    <div id="notifPermBanner" class="notif-perm-banner" style="display:none">
+      <div class="npb-ico">🔔</div>
+      <div class="npb-text">알림을 받으려면 브라우저 알림 권한이 필요해요</div>
+      <button class="npb-btn" onclick="requestNotifPermission()">허용하기</button>
+    </div>
+
+    <!-- 일일 입력 알림 -->
+    <div class="notif-sheet-section">
+      <div class="notif-section-title">매일 알림</div>
+      <div class="notif-row">
+        <div class="notif-row-left">
+          <div class="notif-row-ico">📝</div>
+          <div class="notif-row-info">
+            <div class="nr-title">오늘 하루 지출 기록 알림</div>
+            <div class="nr-sub">하루 동안 쓴 비용을 적도록 매일 알려줘요</div>
+          </div>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="notifDailyToggle" onchange="saveNotifSettings()">
+          <span class="sw-slider"></span>
+        </label>
+      </div>
+      <div class="notif-row" id="notifDailyTimeRow" style="opacity:0.4;pointer-events:none">
+        <div class="notif-row-left">
+          <div class="notif-row-ico">⏰</div>
+          <div class="notif-row-info">
+            <div class="nr-title">알림 받을 시간</div>
+            <div class="nr-sub">이 시간에 "오늘 지출 기록하세요!" 알림이 와요</div>
+          </div>
+        </div>
+        <div class="notif-time-wrap">
+          <div class="notif-time-btn">
+            <input type="time" id="notifDailyTime" value="21:00" onchange="saveNotifSettings()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 예산 초과 알림 -->
+    <div class="notif-sheet-section">
+      <div class="notif-section-title">예산 알림</div>
+      <div class="notif-row">
+        <div class="notif-row-left">
+          <div class="notif-row-ico">⚠️</div>
+          <div class="notif-row-info">
+            <div class="nr-title">예산 80% 초과 알림</div>
+            <div class="nr-sub">예산의 80%를 넘으면 알려줘요</div>
+          </div>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="notifBudgetToggle" onchange="saveNotifSettings()">
+          <span class="sw-slider"></span>
+        </label>
+      </div>
+      <div class="notif-row">
+        <div class="notif-row-left">
+          <div class="notif-row-ico">🚨</div>
+          <div class="notif-row-info">
+            <div class="nr-title">예산 초과 알림</div>
+            <div class="nr-sub">예산을 넘으면 즉시 알려줘요</div>
+          </div>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="notifOverBudgetToggle" onchange="saveNotifSettings()">
+          <span class="sw-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 월말 리포트 -->
+    <div class="notif-sheet-section">
+      <div class="notif-section-title">리포트</div>
+      <div class="notif-row">
+        <div class="notif-row-left">
+          <div class="notif-row-ico">📊</div>
+          <div class="notif-row-info">
+            <div class="nr-title">월말 지출 요약</div>
+            <div class="nr-sub">매월 마지막 날 이달 지출을 알려줘요</div>
+          </div>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="notifMonthlyToggle" onchange="saveNotifSettings()">
+          <span class="sw-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-secondary" onclick="closeOverlay('notifOverlay')">닫기</button>
   </div>
 </div>
 
@@ -1402,6 +1530,7 @@ async function submitTx() {
   }
 
   await saveAll();
+  checkBudgetNotif(); // 예산 알림 체크
   document.getElementById('addOverlay').classList.remove('open');
   render();
 }
@@ -1480,6 +1609,198 @@ function closeOverlay(id, e) {
   if (el) el.classList.remove('open');
 }
 
+
+// ══════════════════════════════════════════
+// 알림 (Notification) 시스템
+// ══════════════════════════════════════════
+
+// 알림 설정 기본값
+let notifSettings = {
+  daily: false,
+  dailyTime: '21:00',
+  budget: false,
+  overBudget: false,
+  monthly: false,
+};
+let notifTimers = []; // 등록된 타이머 ID 목록
+
+/** 알림 설정 모달 열기 */
+async function openNotifModal() {
+  // 저장된 설정 불러오기
+  try {
+    const saved = await dbGet('notifSettings');
+    if (saved && typeof saved === 'object') notifSettings = { ...notifSettings, ...saved };
+  } catch {}
+
+  // UI 반영
+  document.getElementById('notifDailyToggle').checked = notifSettings.daily;
+  document.getElementById('notifDailyTime').value = notifSettings.dailyTime || '21:00';
+  document.getElementById('notifBudgetToggle').checked = notifSettings.budget;
+  document.getElementById('notifOverBudgetToggle').checked = notifSettings.overBudget;
+  document.getElementById('notifMonthlyToggle').checked = notifSettings.monthly;
+  updateDailyTimeRowState();
+
+  // 권한 배너 표시 여부
+  const permBanner = document.getElementById('notifPermBanner');
+  if (Notification.permission === 'granted') {
+    permBanner.style.display = 'none';
+  } else if (Notification.permission === 'denied') {
+    permBanner.querySelector('.npb-text').textContent = '브라우저 설정에서 알림을 허용해주세요.';
+    permBanner.querySelector('.npb-btn').style.display = 'none';
+    permBanner.style.display = 'flex';
+  } else {
+    permBanner.style.display = 'flex';
+  }
+
+  document.getElementById('notifOverlay').classList.add('open');
+}
+
+/** 알림 시간 행 활성/비활성 */
+function updateDailyTimeRowState() {
+  const row = document.getElementById('notifDailyTimeRow');
+  const on = document.getElementById('notifDailyToggle').checked;
+  row.style.opacity = on ? '1' : '0.4';
+  row.style.pointerEvents = on ? 'auto' : 'none';
+}
+
+/** 권한 요청 */
+async function requestNotifPermission() {
+  const result = await Notification.requestPermission();
+  if (result === 'granted') {
+    document.getElementById('notifPermBanner').style.display = 'none';
+    scheduleNotifications();
+    // 테스트 알림
+    new Notification('머니세이버 알림 설정 완료! 🎉', {
+      body: '이제 설정한 시간에 알림을 받을 수 있어요.',
+      icon: '/gagebu/icon.png',
+    });
+  } else {
+    document.getElementById('notifPermBanner').querySelector('.npb-text').textContent =
+      '브라우저 설정에서 알림을 허용해주세요.';
+    document.getElementById('notifPermBanner').querySelector('.npb-btn').style.display = 'none';
+  }
+}
+
+/** 설정 저장 + 스케줄 재등록 */
+async function saveNotifSettings() {
+  notifSettings = {
+    daily: document.getElementById('notifDailyToggle').checked,
+    dailyTime: document.getElementById('notifDailyTime').value,
+    budget: document.getElementById('notifBudgetToggle').checked,
+    overBudget: document.getElementById('notifOverBudgetToggle').checked,
+    monthly: document.getElementById('notifMonthlyToggle').checked,
+  };
+  updateDailyTimeRowState();
+  try { await dbSet('notifSettings', notifSettings); } catch {}
+  scheduleNotifications();
+}
+
+/** 알림 스케줄 등록 */
+function scheduleNotifications() {
+  // 기존 타이머 모두 제거
+  notifTimers.forEach(id => clearTimeout(id));
+  notifTimers = [];
+
+  if (Notification.permission !== 'granted') return;
+
+  // 1. 매일 입력 알림
+  if (notifSettings.daily && notifSettings.dailyTime) {
+    const todayExp = sumExp(monthTxs());
+    const msg = todayExp > 0
+      ? `오늘 이미 ${fmt(todayExp)} 기록했어요. 더 쓴 게 있으면 추가해보세요!`
+      : '오늘 하루 동안 쓴 비용을 머니세이버에 기록해보세요!';
+    scheduleDailyNotif(
+      notifSettings.dailyTime,
+      '오늘 지출 기록할 시간이에요 📝',
+      msg
+    );
+  }
+
+  // 2. 월말 리포트 (매월 마지막 날 오전 9시)
+  if (notifSettings.monthly) {
+    scheduleMonthlyNotif();
+  }
+
+  // 3. 예산 알림은 지출 입력 시 즉시 체크 (아래 checkBudgetNotif 참조)
+}
+
+/** 매일 특정 시간 알림 스케줄 */
+function scheduleDailyNotif(timeStr, title, body) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1); // 오늘 이미 지났으면 내일
+  const delay = target - now;
+  const id = setTimeout(() => {
+    sendNotif(title, body);
+    // 24시간 후 재등록
+    notifTimers.push(setTimeout(() => scheduleDailyNotif(timeStr, title, body), 0));
+  }, delay);
+  notifTimers.push(id);
+}
+
+/** 월말 알림 스케줄 */
+function scheduleMonthlyNotif() {
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0); // 이번 달 마지막 날
+  lastDay.setHours(9, 0, 0, 0);
+  if (lastDay > now) {
+    const delay = lastDay - now;
+    const id = setTimeout(() => {
+      const txs = monthTxs();
+      const exp = sumExp(txs);
+      sendNotif(
+        `${now.getMonth() + 1}월 지출 요약 📊`,
+        `이번 달 총 ${fmt(exp)} 지출했어요. AI 분석으로 더 자세히 알아보세요!`
+      );
+    }, delay);
+    notifTimers.push(id);
+  }
+}
+
+/** 예산 알림 체크 (지출 저장 시 호출) */
+function checkBudgetNotif() {
+  if (Notification.permission !== 'granted') return;
+  if (!budget.total) return;
+  const exp = sumExp(monthTxs());
+  const pct = exp / budget.total;
+  if (notifSettings.overBudget && pct >= 1) {
+    sendNotif('예산 초과! 🚨', `이번 달 예산 ${fmt(budget.total)}을 ${fmt(exp - budget.total)} 초과했어요.`);
+  } else if (notifSettings.budget && pct >= 0.8 && pct < 1) {
+    sendNotif('예산 80% 사용 ⚠️', `이번 달 예산의 ${Math.round(pct * 100)}%를 사용했어요. 절약해보세요!`);
+  }
+}
+
+/** 알림 전송 */
+function sendNotif(title, body) {
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, {
+      body,
+      icon: '/gagebu/icon-192.png',
+      badge: '/gagebu/icon-192.png',
+      tag: 'moneysaver',
+      renotify: true,
+    });
+  } catch (e) {
+    console.warn('[Notif] 알림 전송 실패:', e);
+  }
+}
+
+/** 저장된 알림 설정 불러와서 스케줄 등록 */
+async function initNotifications() {
+  try {
+    const saved = await dbGet('notifSettings');
+    if (saved && typeof saved === 'object') {
+      notifSettings = { ...notifSettings, ...saved };
+      if (Notification.permission === 'granted') {
+        scheduleNotifications();
+      }
+    }
+  } catch {}
+}
+
 // ══════════════════════════════════════════
 // 앱 초기화
 // ══════════════════════════════════════════
@@ -1494,6 +1815,9 @@ async function init() {
 
   // 2. 고정 항목 자동 적용
   applyRecurring();
+
+  // 3. 알림 초기화
+  initNotifications();
 
   // 3. 초기 렌더링
   render();
