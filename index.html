@@ -161,9 +161,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .summary-label{font-size:9px;color:var(--text3);letter-spacing:0.3px;margin-bottom:2px;font-weight:500;}
 .summary-value{font-size:13px;font-weight:700;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .s-income{color:var(--green);} .s-expense{color:var(--red);}
-.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);padding:0;flex-shrink:0;transition:background 0.2s;}
-.tab{flex:1;padding:11px 4px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all 0.2s;white-space:nowrap;text-align:center;}
-.tab.active{color:var(--text);border-bottom-color:var(--gold);font-weight:700;}
+.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);padding:6px 10px;gap:6px;flex-shrink:0;transition:background 0.2s;}
+.tab{flex:1;padding:7px 4px;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;border:1.5px solid var(--border);background:var(--bg);border-radius:20px;transition:all 0.18s;white-space:nowrap;text-align:center;font-family:inherit;letter-spacing:-0.2px;}
+.tab:active{transform:scale(0.95);}
+.tab.active{color:var(--white);background:var(--text);border-color:var(--text);font-weight:700;}
+[data-theme="dark"] .tab.active{color:var(--bg);background:var(--text);border-color:var(--text);}
 .ad-banner{margin:6px 12px 0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:6px;}
 .ad-label{font-size:9px;color:var(--text3);letter-spacing:0.5px;background:var(--border);padding:1px 4px;border-radius:3px;flex-shrink:0;}
 .ad-content{font-size:11px;color:var(--text2);flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
@@ -557,11 +559,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <span class="mi-ico">🔁</span> 고정 지출/수입
   </div>
 
-  <div class="more-menu-item" onclick="closeMoreMenu();openApiKeyModal()">
-    <span class="mi-ico">🔑</span> AI API 키 설정
-  </div>
   <div class="more-menu-item" onclick="closeMoreMenu();openNotifModal()">
     <span class="mi-ico">🔔</span> 알림 설정
+  </div>
+  <div class="more-menu-item" onclick="closeMoreMenu();openCatModal()">
+    <span class="mi-ico">⚙️</span> 카테고리 설정
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();toggleDark()">
     <span class="mi-ico" id="darkIco">🌙</span> <span id="darkLabel">다크모드</span>
@@ -814,25 +816,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
 
     <button class="btn-secondary" onclick="closeOverlay('notifOverlay')">닫기</button>
-  </div>
-</div>
-
-<!-- API KEY MODAL -->
-<div class="overlay" id="apiKeyOverlay" onclick="closeOverlay('apiKeyOverlay',event)">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">🔑 API 키 설정</div>
-    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:16px;">
-      AI 분석 기능을 사용하려면 Anthropic API 키가 필요해요.<br>
-      키는 <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold);font-weight:600;">console.anthropic.com</a>에서 무료로 발급받을 수 있어요.<br>
-      <span style="color:var(--text3);font-size:11px;">입력한 키는 내 기기에만 저장되며 외부로 전송되지 않아요.</span>
-    </div>
-    <div class="field">
-      <label>Anthropic API 키</label>
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="font-family:monospace;font-size:13px;">
-    </div>
-    <button class="btn-main" onclick="saveApiKey()">저장</button>
-    <button class="btn-cancel" onclick="closeOverlay('apiKeyOverlay')">취소</button>
   </div>
 </div>
 
@@ -1215,23 +1198,6 @@ async function applyRecurring(){
 }
 
 
-// ── API KEY ──
-async function openApiKeyModal(){
-  try{
-    const key=await dbGet('claudeApiKey');
-    if(key) document.getElementById('apiKeyInput').value=key;
-  }catch{}
-  document.getElementById('apiKeyOverlay').classList.add('open');
-}
-async function saveApiKey(){
-  const key=document.getElementById('apiKeyInput').value.trim();
-  if(!key||!key.startsWith('sk-ant-')){alert('올바른 API 키를 입력해주세요.\n(sk-ant-로 시작해야 해요)');return;}
-  await dbSet('claudeApiKey',key);
-  document.getElementById('apiKeyOverlay').classList.remove('open');
-  alert('API 키가 저장됐어요! AI 분석을 다시 시도해보세요.');
-  renderAITab();
-}
-
 
 // ── FAB 동적 ──
 let currentTab = 'list';
@@ -1239,10 +1205,15 @@ function updateFab(tab) {
   currentTab = tab;
   const btn = document.getElementById('fabBtn');
   if (!btn) return;
-  if (tab === 'recur') {
+  // 내역 탭에서만 FAB 표시
+  if (tab === 'list') {
+    btn.style.display = 'flex';
+    btn.innerHTML = '<span style="font-size:18px">＋</span> 내역 추가';
+  } else if (tab === 'recur') {
+    btn.style.display = 'flex';
     btn.innerHTML = '<span style="font-size:18px">＋</span> 고정 항목 추가';
   } else {
-    btn.innerHTML = '<span style="font-size:18px">＋</span> 내역 추가';
+    btn.style.display = 'none';
   }
 }
 function fabAction() {
@@ -1426,39 +1397,23 @@ ${monthHistory.length>0?`- 최근 3개월 지출: ${monthHistory.join(', ')}`:''
 ## 다음 달 예측 & 목표
 이번 달 패턴 기반으로 다음 달 예상 지출과 추천 예산 목표를 제시해주세요.`;
   try{
-    // API 키 확인
-    const apiKey = await (async()=>{try{return await dbGet('claudeApiKey');}catch{return null;}})();
-    if(!apiKey){
-      document.getElementById('aiResultArea').innerHTML=`
-        <div class="ai-section">
-          <div class="ai-section-header">🔑 API 키 설정 필요</div>
-          <div class="ai-section-body">
-            AI 분석을 사용하려면 Anthropic API 키가 필요해요.<br><br>
-            <strong>설정 방법:</strong><br>
-            1. <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold)">console.anthropic.com</a> 에서 API 키 발급<br>
-            2. 아래 버튼을 눌러 API 키 입력<br><br>
-            <button onclick="openApiKeyModal()" style="padding:10px 18px;background:var(--gold);color:#0f0e0c;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 API 키 입력하기</button>
-          </div>
-        </div>`;
-      if(btn){btn.disabled=false;btn.textContent='🤖 AI 분석 시작하기';}
-      return;
-    }
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
-      },
-      body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    // Cloudflare Worker 프록시로 AI 분석 요청
+    const WORKER_URL = 'https://wandering-frost-2f2c.parkhj6124.workers.dev';
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
     });
-    if(!res.ok){
-      const errData=await res.json().catch(()=>({}));
-      throw new Error(errData?.error?.message||`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `오류 ${res.status}`);
     }
-    const data=await res.json();
-    const text=data.content?.find(b=>b.type==='text')?.text||'분석에 실패했어요.';
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '분석에 실패했어요.';
     const sections=parseAISections(text);
     document.getElementById('aiResultArea').innerHTML=sections.map(s=>`<div class="ai-section"><div class="ai-section-header">${s.icon} ${s.title}</div><div class="ai-section-body">${formatAIText(s.body)}</div></div>`).join('');
     // 사용 횟수 업데이트
