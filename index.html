@@ -197,7 +197,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .budget-bar-fill.over{background:var(--red);}
 .budget-footer{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);}
 .cat-items{margin:0 14px 12px;display:flex;flex-direction:column;gap:8px;}
-.cat-item{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);}
+.cat-item{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;transition:opacity 0.15s;}
+.cat-item:active{opacity:0.7;}
 .cat-item-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cat-item-left{display:flex;align-items:center;gap:8px;}
 .cat-icon-sm{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
@@ -469,6 +470,101 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .notif-perm-banner .npb-ico { font-size: 20px; flex-shrink: 0; }
 .notif-perm-banner .npb-text { font-size: 12px; color: var(--text2); line-height: 1.5; flex: 1; }
 .notif-perm-banner .npb-btn { padding: 6px 12px; background: var(--gold); border: none; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0f0e0c; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+/* ── 폰트 사이즈 시스템 ── */
+/* 앱 전반 기준: body 14px, label 11px, caption 10px */
+body { font-size: 14px; }
+
+/* 헤더 */
+.app-name { font-size: 16px; }
+.month-label { font-size: 15px; }
+
+/* 요약 스트립 */
+.summary-label { font-size: 10px; }
+.summary-value { font-size: 14px; }
+
+/* 탭 */
+.tab { font-size: 12px; }
+
+/* 내역 리스트 */
+.tx-name { font-size: 14px; }
+.tx-sub { font-size: 11px; }
+.tx-amt { font-size: 14px; }
+.date-label { font-size: 11px; }
+
+/* 카드 타이틀 */
+.card-title { font-size: 11px; letter-spacing: 0.8px; }
+
+/* 예산 */
+.budget-big { font-size: 24px; }
+.budget-of { font-size: 12px; }
+.budget-pct-badge { font-size: 12px; }
+.budget-footer { font-size: 11px; }
+.cat-name { font-size: 13px; }
+.cat-spent { font-size: 13px; }
+.cat-limit { font-size: 11px; }
+.cat-advice { font-size: 11px; }
+
+/* 시트/모달 */
+.sheet-title { font-size: 17px; }
+.field label { font-size: 11px; }
+.field input, .field select { font-size: 14px; }
+
+/* 버튼 */
+.btn-main { font-size: 14px; }
+.btn-danger { font-size: 13px; }
+.btn-secondary { font-size: 13px; }
+.btn-cancel { font-size: 13px; }
+
+/* 카테고리 버튼 */
+.cat-btn .ci { font-size: 14px; }
+.cat-btn .cl { font-size: 9px; }
+
+/* 고정 항목 */
+.recur-name { font-size: 14px; }
+.recur-sub { font-size: 11px; }
+.recur-amt { font-size: 13px; }
+
+/* AI 섹션 */
+.ai-hero-title { font-size: 20px; }
+.ai-hero-sub { font-size: 12px; }
+.ai-analyze-btn { font-size: 14px; }
+.ai-section-header { font-size: 11px; }
+.ai-section-body { font-size: 13px; line-height: 1.8; }
+
+/* 더보기 메뉴 */
+.more-menu-item { font-size: 14px; }
+
+/* 광고 배너 */
+.ad-content { font-size: 11px; }
+
+/* 유저 메뉴 */
+.u-name { font-size: 15px; }
+.u-email { font-size: 12px; }
+.user-menu-label { font-size: 14px; }
+
+/* 로그인 */
+.login-title { font-size: 24px; }
+.login-sub { font-size: 13px; }
+.login-btn { font-size: 14px; }
+
+/* 프리미엄 */
+.paywall-title { font-size: 20px; }
+.paywall-sub { font-size: 13px; }
+.ft-title { font-size: 13px; }
+.ft-sub { font-size: 11px; }
+.price-main { font-size: 28px; }
+.price-sub { font-size: 12px; }
+.btn-premium { font-size: 15px; }
+
+/* 알림 설정 */
+.nr-title { font-size: 14px; }
+.nr-sub { font-size: 11px; }
+.notif-section-title { font-size: 10px; }
+
+/* 팁 카드 */
+.tip-card .tt { font-size: 12px; }
+
 </style>
 </head>
 <body>
@@ -1273,7 +1369,7 @@ function renderBudget(){
   if(totalBud>0){const pct=Math.min(100,Math.round(totalExp/totalBud*100)),cls=pct>=100?'over':pct>=80?'warn':'',remain=totalBud-totalExp,badgeBg=pct>=100?'var(--red-bg)':pct>=80?'rgba(211,84,0,0.12)':'var(--green-bg)',badgeC=pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--green)';html+=`<div class="budget-overview"><div class="budget-row"><div><div class="budget-big" style="color:${pct>=100?'var(--red)':'var(--text)'}">${fmt(totalExp)}</div><div class="budget-of">/ ${fmt(totalBud)}</div></div><div class="budget-pct-badge" style="background:${badgeBg};color:${badgeC}">${pct}%</div></div><div class="budget-bar-wrap"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div><div class="budget-footer"><span>사용 ${fmt(totalExp)}</span><span style="color:${remain<0?'var(--red)':'var(--text2)'}">남은 예산 ${remain<0?'-':''}${fmt(remain)}</span></div></div>`;}
   else html+=`<div class="no-budget">💡 상단 🎯 버튼으로 예산을 설정하면<br>카테고리별 달성률을 확인할 수 있어요!</div>`;
   const activeCats=CATS.filter(c=>c.catType!=='income'&&((budget.cats[c.id]||0)>0||(catSpend[c.id]||0)>0));
-  if(activeCats.length){html+=`<div class="sec-hd"><h3>카테고리별 현황</h3></div><div class="cat-items">`;activeCats.forEach(cat=>{const spent=catSpend[cat.id]||0,limit=budget.cats[cat.id]||0,pct=limit>0?Math.min(100,Math.round(spent/limit*100)):0,barC=pct>=100?'#c0392b':pct>=80?'#d35400':cat.bar,remain=limit-spent;let tipCls='',tipTxt='';if(limit<=0)tipTxt=`지출 ${fmt(spent)}`;else if(pct>=100){tipCls='ca-over';tipTxt=`⚠️ ${fmt(spent-limit)} 초과`;}else if(pct>=80){tipCls='ca-warn';tipTxt=`⚡ ${pct}% 사용 · ${fmt(remain)} 남음`;}else{tipCls='ca-ok';tipTxt=`✓ ${fmt(remain)} 남음 (${pct}% 사용)`;}const isNow=vY===now.getFullYear()&&vM===now.getMonth();let dailyTxt='';if(remain>0&&limit>0&&isNow){const dim=new Date(vY,vM+1,0).getDate(),dl=dim-now.getDate()+1;dailyTxt=` · 하루 ${fmt(Math.floor(remain/dl))}`;}html+=`<div class="cat-item"><div class="cat-item-row"><div class="cat-item-left"><div class="cat-icon-sm" style="background:${cat.bg}">${cat.icon}</div><div class="cat-name">${cat.label}</div></div><div class="cat-nums"><div class="cat-spent">${fmt(spent)}</div><div class="cat-limit">${limit>0?'/ '+fmt(limit):'미설정'}</div></div></div>${limit>0?`<div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%;background:${barC}"></div></div>`:''}<div class="cat-advice ${tipCls}">${tipTxt}${dailyTxt}</div></div>`;});html+=`</div>`;}
+  if(activeCats.length){html+=`<div class="sec-hd"><h3>카테고리별 현황</h3></div><div class="cat-items">`;activeCats.forEach(cat=>{const spent=catSpend[cat.id]||0,limit=budget.cats[cat.id]||0,pct=limit>0?Math.min(100,Math.round(spent/limit*100)):0,barC=pct>=100?'#c0392b':pct>=80?'#d35400':cat.bar,remain=limit-spent;let tipCls='',tipTxt='';if(limit<=0)tipTxt=`지출 ${fmt(spent)}`;else if(pct>=100){tipCls='ca-over';tipTxt=`⚠️ ${fmt(spent-limit)} 초과`;}else if(pct>=80){tipCls='ca-warn';tipTxt=`⚡ ${pct}% 사용 · ${fmt(remain)} 남음`;}else{tipCls='ca-ok';tipTxt=`✓ ${fmt(remain)} 남음 (${pct}% 사용)`;}const isNow=vY===now.getFullYear()&&vM===now.getMonth();let dailyTxt='';if(remain>0&&limit>0&&isNow){const dim=new Date(vY,vM+1,0).getDate(),dl=dim-now.getDate()+1;dailyTxt=` · 하루 ${fmt(Math.floor(remain/dl))}`;}html+=`<div class="cat-item" onclick="openCatDetail('${cat.id}')"><div class="cat-item-row"><div class="cat-item-left"><div class="cat-icon-sm" style="background:${cat.bg}">${cat.icon}</div><div class="cat-name">${cat.label}</div></div><div class="cat-nums"><div class="cat-spent">${fmt(spent)}</div><div class="cat-limit">${limit>0?'/ '+fmt(limit):'미설정'}</div></div></div>${limit>0?`<div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%;background:${barC}"></div></div>`:''}<div class="cat-advice ${tipCls}">${tipTxt}${dailyTxt}</div></div>`;});html+=`</div>`;}
   document.getElementById('budgetView').innerHTML=html;
 }
 function smartTip(txs,totalExp,totalBud){const isNow=vY===now.getFullYear()&&vM===now.getMonth();if(!isNow)return null;const dim=new Date(vY,vM+1,0).getDate(),dLeft=dim-now.getDate()+1;if(totalBud>0){const pct=totalExp/totalBud,rem=totalBud-totalExp;if(pct>=1)return{icon:'🚨',text:`이번 달 예산을 <strong>${fmt(totalExp-totalBud)}</strong> 초과했어요!`};if(pct>=0.8)return{icon:'⚡',text:`예산의 <strong>${Math.round(pct*100)}%</strong> 사용 중. 남은 ${dLeft}일 · 하루 <strong>${fmt(Math.floor(rem/dLeft))}</strong>`};return{icon:'💡',text:`남은 예산 <strong>${fmt(rem)}</strong> · 하루 <strong>${fmt(Math.floor(rem/dLeft))}</strong> 사용 가능`};}const exp=txs.filter(t=>t.type==='expense'),days=[...new Set(exp.map(t=>t.date))].length;if(days>0){const avg=Math.floor(totalExp/days);return{icon:'📊',text:`하루 평균 <strong>${fmt(avg)}</strong> 지출 · 이달 예상 <strong>${fmt(avg*dim)}</strong>`};}return null;}
@@ -1297,13 +1393,15 @@ function renderChart(){
 // ── CAT DETAIL ──
 function openCatDetail(catId){
   const cat=CMAP[catId]||CMAP.other;
-  const txs=monthTxs().filter(t=>t.type==='expense'&&t.cat===catId).sort((a,b)=>b.date.localeCompare(a.date));
+  // 해당 카테고리의 모든 내역 (수입 카테고리면 수입도 포함)
+  const isIncome = cat.catType==='income';
+  const txs=monthTxs().filter(t=>t.cat===catId).sort((a,b)=>b.date.localeCompare(a.date));
   const total=txs.reduce((s,t)=>s+t.amount,0);
   const days=['일','월','화','수','목','금','토'];
   const txHtml=txs.length?txs.map(t=>{
     const dt=new Date(t.date+'T00:00:00');
     const dateLbl=`${t.date.slice(5).replace('-','.')}(${days[dt.getDay()]})`;
-    return `<div class="cat-detail-tx" onclick="closeOverlay('catDetailOverlay');setTimeout(()=>openEditModal('${t.id}'),200)"><div class="cat-detail-date">${dateLbl}</div><div class="cat-detail-memo">${t.memo||cat.label}</div><div class="cat-detail-amt">-${fmt(t.amount)}</div></div>`;
+    return `<div class="cat-detail-tx" onclick="closeOverlay('catDetailOverlay');setTimeout(()=>openEditModal('${t.id}'),200)"><div class="cat-detail-date">${dateLbl}</div><div class="cat-detail-memo">${t.memo||cat.label}</div><div class="cat-detail-amt" style="color:${t.type==='income'?'var(--green)':' var(--red)'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div></div>`;
   }).join(''):`<div style="text-align:center;padding:30px 0;color:var(--text3);font-size:13px;">이 카테고리 지출이 없어요</div>`;
   document.getElementById('catDetailContent').innerHTML=`
     <div class="cat-detail-header">
@@ -1423,7 +1521,20 @@ ${monthHistory.length>0?`- 최근 3개월 지출: ${monthHistory.join(', ')}`:''
     // 쿼터 박스 갱신
     const qBox=document.querySelector('.ai-quota-box');
     if(qBox) qBox.outerHTML=renderAIQuotaBox();
-  }catch(e){document.getElementById('aiResultArea').innerHTML=`<div class="ai-section"><div class="ai-section-body" style="color:var(--red)">분석 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.</div></div>`;}
+  } catch(e) {
+    console.error('[AI] 분석 오류:', e);
+    document.getElementById('aiResultArea').innerHTML=`
+      <div class="ai-section">
+        <div class="ai-section-header">❌ 분석 실패</div>
+        <div class="ai-section-body" style="color:var(--red)">
+          ${e.message || '알 수 없는 오류가 발생했어요.'}<br><br>
+          <span style="color:var(--text3);font-size:11px;">
+            • 네트워크 연결을 확인해주세요<br>
+            • 잠시 후 다시 시도해주세요
+          </span>
+        </div>
+      </div>`;
+  }
   if(btn){btn.disabled=false;btn.textContent='🔄 다시 분석하기';}
 }
 
