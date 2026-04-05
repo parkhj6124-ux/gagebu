@@ -788,7 +788,7 @@ body { font-size: 14px; }
     </div>
     <div class="cat-grid" id="rCatGrid"></div>
     <div class="field"><label>항목 이름</label><input type="text" id="rNameInput" placeholder="예: 넷플릭스, 월세, 용돈"></div>
-    <div class="field"><label>매월 등록일</label><select id="rDayInput"><option value="1">1일</option><option value="5">5일</option><option value="10">10일</option><option value="15">15일</option><option value="20">20일</option><option value="25">25일</option></select></div>
+    <div class="field"><label>매월 나가는 날</label><select id="rDayInput"><option value="1">1일</option><option value="2">2일</option><option value="3">3일</option><option value="4">4일</option><option value="5">5일</option><option value="6">6일</option><option value="7">7일</option><option value="8">8일</option><option value="9">9일</option><option value="10">10일</option><option value="11">11일</option><option value="12">12일</option><option value="13">13일</option><option value="14">14일</option><option value="15">15일</option><option value="16">16일</option><option value="17">17일</option><option value="18">18일</option><option value="19">19일</option><option value="20">20일</option><option value="21">21일</option><option value="22">22일</option><option value="23">23일</option><option value="24">24일</option><option value="25">25일</option><option value="26">26일</option><option value="27">27일</option><option value="28">28일</option><option value="29">29일</option><option value="30">30일</option><option value="31">31일</option></select></div>
     <button class="btn-main" onclick="saveRecur()">저장</button>
     <button class="btn-danger" id="deleteRecurBtn" style="display:none" onclick="deleteCurrentRecur()">이 고정 항목 삭제</button>
     <button class="btn-cancel" onclick="closeOverlay('recurOverlay')">취소</button>
@@ -1434,10 +1434,6 @@ function renderRecur(){
       <div style="flex:1;background:var(--red-bg);border-radius:12px;padding:12px;text-align:center;">
         <div style="font-size:10px;color:var(--red);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">고정 지출</div>
         <div style="font-size:15px;font-weight:700;color:var(--red);">-${fmt(totalExp)}</div>
-      </div>
-      <div style="flex:1;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">월 순액</div>
-        <div style="font-size:15px;font-weight:700;color:${net>=0?'var(--green)':'var(--red)'};">${net>=0?'+':''}${fmt(net)}</div>
       </div>
     </div>`;
 
