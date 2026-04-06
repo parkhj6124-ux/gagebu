@@ -1538,7 +1538,7 @@ ${monthHistory.length>0?`- 최근 3개월 지출: ${monthHistory.join(', ')}`:''
 이번 달 패턴 기반으로 다음 달 예상 지출과 추천 예산 목표를 제시해주세요.`;
   try{
     // Cloudflare Worker 프록시로 AI 분석 요청
-    const WORKER_URL = 'https://wandering-frost-2f2c.parkhj6124.workers.dev';
+    const WORKER_URL = 'https://moneysaver-proxy.vercel.app/api/proxy';
     let res;
     try {
       res = await fetch(WORKER_URL, {
