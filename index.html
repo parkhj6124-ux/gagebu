@@ -565,6 +565,23 @@ body { font-size: 14px; }
 /* 팁 카드 */
 .tip-card .tt { font-size: 12px; }
 
+
+/* ── 일일 예산 카드 ── */
+.daily-budget-card{margin:12px 14px 0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.daily-budget-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.daily-budget-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
+.daily-budget-date{font-size:11px;color:var(--text3);}
+.daily-amount-row{display:flex;align-items:flex-end;gap:6px;margin-bottom:4px;}
+.daily-amount-big{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.daily-amount-sub{font-size:12px;color:var(--text3);margin-bottom:3px;}
+.daily-budget-bar-wrap{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:10px 0 8px;}
+.daily-budget-bar-fill{height:100%;border-radius:3px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+.daily-stats-row{display:flex;justify-content:space-between;align-items:center;}
+.daily-stat{text-align:center;}
+.daily-stat-val{font-size:13px;font-weight:700;}
+.daily-stat-lbl{font-size:10px;color:var(--text3);margin-top:1px;}
+.daily-status-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+
 </style>
 </head>
 <body>
@@ -764,8 +781,10 @@ body { font-size: 14px; }
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">예산 설정</div>
-    <div class="modal-section">전체 월 예산</div>
-    <div class="budget-field-row"><div class="bfr-icon" style="background:#f0f0f0">💰</div><div class="bfr-label">총 예산</div><input class="bfr-input" type="number" id="totalBudgetInput" placeholder="0"></div>
+    <div class="modal-section">월 예산</div>
+    <div class="budget-field-row"><div class="bfr-icon" style="background:#f0f0f0">💰</div><div class="bfr-label">월 총 예산</div><input class="bfr-input" type="number" id="totalBudgetInput" placeholder="0"></div>
+    <div class="budget-field-row"><div class="bfr-icon" style="background:#e8f5ee">📅</div><div class="bfr-label">일일 예산</div><input class="bfr-input" type="number" id="dailyBudgetInput" placeholder="0"></div>
+    <div style="font-size:11px;color:var(--text3);margin:-4px 0 8px;padding-left:40px;">미입력 시 월 예산 ÷ 남은 일수로 자동 계산</div>
     <div class="modal-section">카테고리별 예산</div>
     <div id="catBudgetFields"></div>
     <button class="btn-main" onclick="saveBudget()">저장</button>
@@ -922,10 +941,10 @@ body { font-size: 14px; }
     <div class="paywall-hero">
       <div class="paywall-ico">✦</div>
       <div class="paywall-title">머니세이버 프리미엄</div>
-      <div class="paywall-sub">광고 없이, AI 분석을 연 4회 사용하고<br>더 스마트한 용돈·지출 관리를 시작하세요</div>
+      <div class="paywall-sub">광고 없이, AI 분석을 매달 사용하고<br>더 스마트한 용돈·지출 관리를 시작하세요</div>
     </div>
     <div class="feature-list">
-      <div class="feature-row"><div class="feature-ico">🤖</div><div><div class="ft-title">AI 월별 분석 연 4회</div><div class="ft-sub">소비 패턴 분석 + 절약 제안 + 다음 달 예측<br><span style="font-size:10px;color:var(--text3)">무료: 연 2회 / 프리미엄: 연 4회</span></div></div></div>
+      <div class="feature-row"><div class="feature-ico">🤖</div><div><div class="ft-title">AI 월별 분석 월 1회</div><div class="ft-sub">소비 패턴 분석 + 절약 제안 + 다음 달 예측<br><span style="font-size:10px;color:var(--text3)">무료: 연 2회 / 프리미엄: 월 1회</span></div></div></div>
       <div class="feature-row"><div class="feature-ico">🚫</div><div><div class="ft-title">광고 완전 제거</div><div class="ft-sub">깔끔한 화면으로 집중해서 관리</div></div></div>
       <div class="feature-row"><div class="feature-ico">📊</div><div><div class="ft-title">상세 소비 리포트</div><div class="ft-sub">카테고리별 추세 및 비교 분석</div></div></div>
       <div class="feature-row"><div class="feature-ico">🎨</div><div><div class="ft-title">커스텀 카테고리 무제한</div><div class="ft-sub">나만의 항목 자유롭게 추가</div></div></div>
@@ -960,8 +979,15 @@ let editId=null,curType='expense',selCat='food',recurType='expense',recurCat='su
 let donutChart=null,isPremium=false;
 let editRecurId=null;
 // AI 분석 정책: 광고(무료) 연 2회 / 프리미엄 연 4회, 연도 기준 리셋
-const AI_LIMIT_FREE=2, AI_LIMIT_PREMIUM=4;
-let aiUsageData={year:new Date().getFullYear(),free:0,premium:0}; // {year, free, premium}
+// AI 분석 정책: 무료 연 2회 / 유료 월 1회
+const AI_LIMIT_FREE = 2;      // 연간 횟수
+const AI_LIMIT_PREMIUM = 1;   // 월간 횟수
+let aiUsageData = {
+  year: now.getFullYear(),    // 무료 기준 연도
+  month: now.getMonth(),      // 유료 기준 월
+  free: 0,                    // 무료 사용 횟수 (연 리셋)
+  premium: 0                  // 유료 사용 횟수 (월 리셋)
+};
 // 로그인 상태
 let currentUser=null; // {uid, name, email, provider, initials, photo}
 let emailSignupMode=false;
@@ -1008,13 +1034,21 @@ async function loadAll() {
   // AI 사용 횟수 (연도 바뀌면 리셋)
   const au = await safeGet('aiUsageData', null);
   if (au && typeof au === 'object') {
-    if (au.year === now.getFullYear()) {
-      aiUsageData = au;
-    } else {
-      // 새해 리셋
-      aiUsageData = { year: now.getFullYear(), free: 0, premium: 0 };
-      await dbSet('aiUsageData', aiUsageData);
+    aiUsageData = { ...aiUsageData, ...au };
+    let changed = false;
+    // 무료: 연도 바뀌면 리셋
+    if (au.year !== now.getFullYear()) {
+      aiUsageData.year = now.getFullYear();
+      aiUsageData.free = 0;
+      changed = true;
     }
+    // 유료: 월 바뀌면 리셋
+    if (au.month !== now.getMonth()) {
+      aiUsageData.month = now.getMonth();
+      aiUsageData.premium = 0;
+      changed = true;
+    }
+    if (changed) await dbSet('aiUsageData', aiUsageData);
   }
 
   // 다크모드
@@ -1364,7 +1398,67 @@ function renderList(){
 function renderBudget(){
   const txs=monthTxs(),totalExp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),totalBud=budget.total||0,catSpend={};
   txs.filter(t=>t.type==='expense').forEach(t=>{catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount;});
-  let html='';
+
+  // 일일 예산 카드
+  const isNow = vY===now.getFullYear() && vM===now.getMonth();
+  const dim = new Date(vY, vM+1, 0).getDate();
+  const daysPassed = isNow ? now.getDate() : dim;
+  const daysLeft = isNow ? dim - now.getDate() + 1 : 1;
+  const todayStr = now.toISOString().split('T')[0];
+  const todayExp = isNow ? txs.filter(t=>t.type==='expense'&&t.date===todayStr).reduce((s,t)=>s+t.amount,0) : 0;
+
+  // 일일 예산 계산 (설정값 or 월예산÷남은일수 자동계산)
+  let dailyBudget = budget.daily || 0;
+  if (!dailyBudget && totalBud > 0 && isNow) {
+    dailyBudget = Math.floor((totalBud - totalExp + todayExp) / daysLeft);
+  }
+
+  let dailyCard = '';
+  if (dailyBudget > 0 && isNow) {
+    const dailyRemain = dailyBudget - todayExp;
+    const dailyPct = Math.min(100, Math.round(todayExp / dailyBudget * 100));
+    const isOver = dailyRemain < 0;
+    const isWarn = !isOver && dailyPct >= 80;
+    const barColor = isOver ? 'var(--red)' : isWarn ? 'var(--orange)' : 'var(--green)';
+    const amtColor = isOver ? 'var(--red)' : isWarn ? 'var(--orange)' : 'var(--green)';
+    const badgeBg = isOver ? 'var(--red-bg)' : isWarn ? 'rgba(211,84,0,0.1)' : 'var(--green-bg)';
+    const badgeText = isOver ? '초과' : isWarn ? '주의' : '양호';
+    const days=['일','월','화','수','목','금','토'];
+    const todayLabel = `${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+
+    dailyCard = `<div class="daily-budget-card">
+      <div class="daily-budget-top">
+        <div class="daily-budget-label">📅 오늘의 예산</div>
+        <div class="daily-budget-date">${todayLabel}</div>
+      </div>
+      <div class="daily-amount-row">
+        <div class="daily-amount-big" style="color:${amtColor}">${isOver?'-':''}${fmt(Math.abs(dailyRemain))}</div>
+        <div class="daily-amount-sub">${isOver?'초과':'사용 가능'}</div>
+      </div>
+      <div class="daily-budget-bar-wrap">
+        <div class="daily-budget-bar-fill" style="width:${dailyPct}%;background:${barColor}"></div>
+      </div>
+      <div class="daily-stats-row">
+        <div class="daily-stat">
+          <div class="daily-stat-val" style="color:var(--text)">${fmt(dailyBudget)}</div>
+          <div class="daily-stat-lbl">일일 예산</div>
+        </div>
+        <div class="daily-stat">
+          <div class="daily-stat-val" style="color:var(--red)">${fmt(todayExp)}</div>
+          <div class="daily-stat-lbl">오늘 지출</div>
+        </div>
+        <div class="daily-stat">
+          <div class="daily-stat-val" style="color:var(--text3)">${daysLeft}일</div>
+          <div class="daily-stat-lbl">남은 일수</div>
+        </div>
+        <div class="daily-status-badge" style="background:${badgeBg};color:${barColor}">${badgeText} ${dailyPct}%</div>
+      </div>
+    </div>`;
+  }
+
+  let html = dailyCard;
+  const catSpend2 = catSpend; // alias for below
+
   const tip=smartTip(txs,totalExp,totalBud);if(tip)html+=`<div class="tip-card"><div class="ti">${tip.icon}</div><div class="tt">${tip.text}</div></div>`;
   if(totalBud>0){const pct=Math.min(100,Math.round(totalExp/totalBud*100)),cls=pct>=100?'over':pct>=80?'warn':'',remain=totalBud-totalExp,badgeBg=pct>=100?'var(--red-bg)':pct>=80?'rgba(211,84,0,0.12)':'var(--green-bg)',badgeC=pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--green)';html+=`<div class="budget-overview"><div class="budget-row"><div><div class="budget-big" style="color:${pct>=100?'var(--red)':'var(--text)'}">${fmt(totalExp)}</div><div class="budget-of">/ ${fmt(totalBud)}</div></div><div class="budget-pct-badge" style="background:${badgeBg};color:${badgeC}">${pct}%</div></div><div class="budget-bar-wrap"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div><div class="budget-footer"><span>사용 ${fmt(totalExp)}</span><span style="color:${remain<0?'var(--red)':'var(--text2)'}">남은 예산 ${remain<0?'-':''}${fmt(remain)}</span></div></div>`;}
   else html+=`<div class="no-budget">💡 상단 🎯 버튼으로 예산을 설정하면<br>카테고리별 달성률을 확인할 수 있어요!</div>`;
@@ -1459,21 +1553,32 @@ function renderRecur(){
 
 // ── AI TAB ──
 function getAIQuota(){
-  const limit=isPremium?AI_LIMIT_PREMIUM:AI_LIMIT_FREE;
-  const used=isPremium?aiUsageData.premium:aiUsageData.free;
-  const remaining=Math.max(0,limit-used);
-  return {limit,used,remaining,canAnalyze:remaining>0};
+  if (isPremium) {
+    const used = aiUsageData.premium || 0;
+    const remaining = Math.max(0, AI_LIMIT_PREMIUM - used);
+    return { limit: AI_LIMIT_PREMIUM, used, remaining, canAnalyze: remaining > 0, period: '월' };
+  } else {
+    const used = aiUsageData.free || 0;
+    const remaining = Math.max(0, AI_LIMIT_FREE - used);
+    return { limit: AI_LIMIT_FREE, used, remaining, canAnalyze: remaining > 0, period: '연' };
+  }
 }
 
 function renderAIQuotaBox(){
-  const q=getAIQuota();
-  const pills=Array.from({length:q.limit},(_,i)=>`<div class="ai-quota-pill${i<q.used?' used':''}"></div>`).join('');
-  const typeLabel=isPremium?'프리미엄':'광고 시청';
-  const adBtn=(!isPremium&&q.remaining===0)?`<button class="ai-watch-ad-btn" onclick="watchAdForAnalysis()">광고 보기</button>`:'';
+  const q = getAIQuota();
+  const pills = Array.from({length: q.limit}, (_, i) =>
+    `<div class="ai-quota-pill${i < q.used ? ' used' : ''}"></div>`
+  ).join('');
+  const typeLabel = isPremium ? '프리미엄 (월 1회)' : '무료 (연 2회)';
+  const resetLabel = isPremium
+    ? `${now.getMonth() + 1}월 리셋`
+    : `${now.getFullYear()}년 리셋`;
+  const adBtn = (!isPremium && q.remaining === 0)
+    ? `<button class="ai-watch-ad-btn" onclick="watchAdForAnalysis()">광고 보기</button>` : '';
   return `<div class="ai-quota-box">
     <div class="ai-quota-left">
-      <div class="aq-title">올해 AI 분석 횟수</div>
-      <div class="aq-sub">${typeLabel} · ${q.used}/${q.limit}회 사용 · ${new Date().getFullYear()}년 리셋</div>
+      <div class="aq-title">AI 분석 횟수</div>
+      <div class="aq-sub">${typeLabel} · ${q.used}/${q.limit}회 사용 · ${resetLabel}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
       <div class="ai-quota-pills">${pills}</div>
@@ -1486,7 +1591,7 @@ function renderAITab(){
   const el=document.getElementById('aiTabContent');
   const txs=monthTxs(),totalExp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),hasData=txs.length>0;
   const q=getAIQuota();
-  const premiumBanner=isPremium?'':`<div class="premium-banner" onclick="openPaywall()"><div class="premium-banner-ico">✦</div><div class="premium-banner-text"><div class="premium-banner-title">프리미엄으로 업그레이드</div><div class="premium-banner-sub">AI 분석 연 4회 + 광고 제거 · ₩4,900</div></div><div class="premium-banner-arrow">›</div></div>`;
+  const premiumBanner=isPremium?'':`<div class="premium-banner" onclick="openPaywall()"><div class="premium-banner-ico">✦</div><div class="premium-banner-text"><div class="premium-banner-title">프리미엄으로 업그레이드</div><div class="premium-banner-sub">AI 분석 월 1회 + 광고 제거 · ₩4,900</div></div><div class="premium-banner-arrow">›</div></div>`;
   if(!hasData){
     el.innerHTML=`${premiumBanner}${renderAIQuotaBox()}<div class="ai-hero"><div class="ai-hero-label">AI ANALYSIS ✦</div><div class="ai-hero-title">이번 달 지출을<br>AI가 분석해 드려요</div><div class="ai-hero-sub">내역을 추가하면 소비 패턴 분석,<br>절약 팁, 다음 달 예측까지 해 드릴게요</div></div><div style="text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;"><div style="font-size:36px;margin-bottom:10px">📒</div>내역을 먼저 추가해 보세요</div>`;
     return;
@@ -1587,9 +1692,14 @@ ${monthHistory.length>0?`- 최근 3개월 지출: ${monthHistory.join(', ')}`:''
     const sections=parseAISections(text);
     document.getElementById('aiResultArea').innerHTML=sections.map(s=>`<div class="ai-section"><div class="ai-section-header">${s.icon} ${s.title}</div><div class="ai-section-body">${formatAIText(s.body)}</div></div>`).join('');
     // 사용 횟수 업데이트
-    if(isPremium) aiUsageData.premium=Math.min(AI_LIMIT_PREMIUM,(aiUsageData.premium||0)+1);
-    else aiUsageData.free=Math.min(AI_LIMIT_FREE,(aiUsageData.free||0)+1);
-    await dbSet('aiUsageData',aiUsageData);
+    if (isPremium) {
+      aiUsageData.premium = Math.min(AI_LIMIT_PREMIUM, (aiUsageData.premium || 0) + 1);
+      aiUsageData.month = now.getMonth();
+    } else {
+      aiUsageData.free = Math.min(AI_LIMIT_FREE, (aiUsageData.free || 0) + 1);
+      aiUsageData.year = now.getFullYear();
+    }
+    await dbSet('aiUsageData', aiUsageData);
     // 쿼터 박스 갱신
     const qBox=document.querySelector('.ai-quota-box');
     if(qBox) qBox.outerHTML=renderAIQuotaBox();
@@ -1772,8 +1882,29 @@ async function deleteTx() {
   document.getElementById('addOverlay').classList.remove('open');
   render();
 }
-function openBudgetModal(){document.getElementById('totalBudgetInput').value=budget.total||'';document.getElementById('catBudgetFields').innerHTML=CATS.filter(c=>c.catType!=='income').map(c=>`<div class="budget-field-row"><div class="bfr-icon" style="background:${c.bg}">${c.icon}</div><div class="bfr-label">${c.label}</div><input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0" value="${budget.cats[c.id]||''}"></div>`).join('');document.getElementById('budgetOverlay').classList.add('open');}
-async function saveBudget(){budget.total=parseFloat(document.getElementById('totalBudgetInput').value)||0;budget.cats={};CATS.filter(c=>c.catType!=='income').forEach(c=>{const v=parseFloat(document.getElementById('bc_'+c.id).value)||0;if(v>0)budget.cats[c.id]=v;});await saveAll();document.getElementById('budgetOverlay').classList.remove('open');render();}
+function openBudgetModal(){
+  document.getElementById('totalBudgetInput').value = budget.total || '';
+  document.getElementById('dailyBudgetInput').value = budget.daily || '';
+  document.getElementById('catBudgetFields').innerHTML = CATS.filter(c=>c.catType!=='income').map(c=>`
+    <div class="budget-field-row">
+      <div class="bfr-icon" style="background:${c.bg}">${c.icon}</div>
+      <div class="bfr-label">${c.label}</div>
+      <input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0" value="${budget.cats[c.id]||''}">
+    </div>`).join('');
+  document.getElementById('budgetOverlay').classList.add('open');
+}
+async function saveBudget(){
+  budget.total = parseFloat(document.getElementById('totalBudgetInput').value) || 0;
+  budget.daily = parseFloat(document.getElementById('dailyBudgetInput').value) || 0;
+  budget.cats = {};
+  CATS.filter(c=>c.catType!=='income').forEach(c=>{
+    const v = parseFloat(document.getElementById('bc_'+c.id).value) || 0;
+    if (v > 0) budget.cats[c.id] = v;
+  });
+  await saveAll();
+  document.getElementById('budgetOverlay').classList.remove('open');
+  render();
+}
 function openRecurModal(){
   editRecurId=null;
   recurType='expense';recurCat='sub';
