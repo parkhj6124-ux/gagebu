@@ -582,6 +582,79 @@ body { font-size: 14px; }
 .daily-stat-lbl{font-size:10px;color:var(--text3);margin-top:1px;}
 .daily-status-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 
+
+/* ── 달력 ── */
+.cal-wrap{margin:12px 14px 0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-title{font-size:13px;font-weight:700;color:var(--text);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;}
+.cal-dow:first-child{color:var(--red);}
+.cal-dow:last-child{color:#4a90d9;}
+.cal-day{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;transition:all 0.15s;padding:2px;}
+.cal-day:active{transform:scale(0.92);}
+.cal-day.empty{cursor:default;}
+.cal-day.today{background:var(--text);border-radius:50%;}
+.cal-day.today .cal-num{color:var(--white);}
+.cal-day.selected{background:var(--gold-bg);border:1.5px solid var(--gold);}
+.cal-day.selected .cal-num{color:var(--gold);font-weight:700;}
+.cal-num{font-size:12px;font-weight:500;color:var(--text);line-height:1;}
+.cal-day.sun .cal-num{color:var(--red);}
+.cal-day.sat .cal-num{color:#4a90d9;}
+.cal-day.today .cal-num{color:var(--white)!important;}
+.cal-dot{width:4px;height:4px;border-radius:50%;margin-top:2px;}
+.cal-heat-0{background:transparent;}
+.cal-heat-1{background:rgba(192,57,43,0.15);}
+.cal-heat-2{background:rgba(192,57,43,0.35);}
+.cal-heat-3{background:rgba(192,57,43,0.6);}
+.cal-heat-4{background:rgba(192,57,43,0.85);}
+.cal-ok-dot{background:var(--green);}
+.cal-detail{margin:0 14px 12px;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.cal-detail-header{padding:12px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text2);display:flex;justify-content:space-between;align-items:center;}
+.cal-detail-total{font-size:13px;font-weight:700;color:var(--red);}
+
+/* ── 게임화 ── */
+.game-card{margin:12px 14px 0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.game-card-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:12px;}
+/* 스트릭 */
+.streak-row{display:flex;align-items:center;gap:10px;}
+.streak-flame{font-size:32px;line-height:1;}
+.streak-info .streak-num{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-1px;}
+.streak-info .streak-label{font-size:12px;color:var(--text3);margin-top:1px;}
+.streak-best{font-size:11px;color:var(--text3);margin-left:auto;text-align:right;}
+.streak-days{display:flex;gap:4px;margin-top:10px;}
+.streak-dot{width:28px;height:28px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);font-weight:600;}
+.streak-dot.ok{background:var(--green);color:white;}
+.streak-dot.fail{background:var(--red-bg);color:var(--red);}
+/* 레벨 */
+.level-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.level-ico{font-size:28px;}
+.level-info{flex:1;}
+.level-name{font-size:14px;font-weight:700;color:var(--text);}
+.level-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.level-bar-wrap{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.level-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),#e8c060);transition:width 0.6s ease;}
+.level-progress{font-size:11px;color:var(--text3);margin-top:5px;text-align:right;}
+/* 뱃지 */
+.badge-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;width:60px;}
+.badge-ico{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border);}
+.badge-ico.earned{border-color:var(--gold);background:var(--gold-bg);}
+.badge-ico.locked{opacity:0.35;filter:grayscale(1);}
+.badge-name{font-size:9px;color:var(--text3);text-align:center;line-height:1.3;}
+/* 칭찬 */
+.praise-card{margin:12px 14px 0;padding:14px 16px;background:linear-gradient(135deg,var(--green) 0%,#27ae60 100%);border-radius:14px;display:flex;align-items:center;gap:12px;}
+.praise-ico{font-size:28px;flex-shrink:0;}
+.praise-text{color:white;}
+.praise-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+.praise-sub{font-size:12px;opacity:0.85;line-height:1.4;}
+/* 절약 계산기 */
+.saving-calc{text-align:center;padding:8px 0 0;}
+.saving-calc-amount{font-size:22px;font-weight:800;color:var(--green);letter-spacing:-0.5px;}
+.saving-calc-label{font-size:12px;color:var(--text3);margin-top:3px;}
+.saving-calc-items{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap;}
+.saving-calc-item{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;}
+
 </style>
 </head>
 <body>
@@ -714,6 +787,7 @@ body { font-size: 14px; }
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('list',this)">내역</button>
+    <button class="tab" onclick="switchTab('cal',this)">달력</button>
     <button class="tab" onclick="switchTab('budget',this)">예산</button>
     <button class="tab" onclick="switchTab('chart',this)">통계</button>
     <button class="tab" onclick="switchTab('ai',this)">AI 분석 ✦</button>
@@ -727,6 +801,9 @@ body { font-size: 14px; }
 
   <div class="content">
     <div id="tab-list" class="tab-panel active"><div id="txList"></div></div>
+    <div id="tab-cal" class="tab-panel">
+      <div id="calGameArea"></div>
+    </div>
     <div id="tab-budget" class="tab-panel"><div id="budgetView"></div></div>
     <div id="tab-chart" class="tab-panel">
       <div class="card" style="margin-top:14px"><div class="card-title">카테고리별 지출</div><div class="chart-wrap"><canvas id="donutChart"></canvas></div><div class="chart-legend" id="donutLegend"></div></div>
@@ -1351,6 +1428,315 @@ function fabAction() {
   else openAddModal();
 }
 
+
+// ══════════════════════════════════════════
+// 달력 + 게임화
+// ══════════════════════════════════════════
+let calSelectedDate = null;
+
+function renderCalTab() {
+  const el = document.getElementById('calGameArea');
+  if (!el) return;
+  const txs = monthTxs();
+  const dim = new Date(vY, vM + 1, 0).getDate();
+
+  // 일별 지출 맵
+  const dayExp = {};
+  const dayInc = {};
+  txs.forEach(t => {
+    const d = parseInt(t.date.split('-')[2]);
+    if (t.type === 'expense') dayExp[d] = (dayExp[d] || 0) + t.amount;
+    else dayInc[d] = (dayInc[d] || 0) + t.amount;
+  });
+  const maxExp = Math.max(...Object.values(dayExp), 1);
+
+  // 히트맵 레벨 계산
+  function heatLevel(exp) {
+    if (!exp) return 0;
+    const r = exp / maxExp;
+    if (r < 0.25) return 1;
+    if (r < 0.5) return 2;
+    if (r < 0.75) return 3;
+    return 4;
+  }
+
+  // 달력 렌더링
+  const firstDay = new Date(vY, vM, 1).getDay();
+  const days = ['일','월','화','수','목','금','토'];
+  const todayDate = now.getFullYear()===vY && now.getMonth()===vM ? now.getDate() : -1;
+  const dailyBudget = getDailyBudget();
+
+  let calCells = '';
+  // 요일 헤더
+  calCells += days.map((d,i) => `<div class="cal-dow">${d}</div>`).join('');
+  // 빈 셀
+  for (let i = 0; i < firstDay; i++) calCells += '<div class="cal-day empty"></div>';
+  // 날짜 셀
+  for (let d = 1; d <= dim; d++) {
+    const exp = dayExp[d] || 0;
+    const heat = heatLevel(exp);
+    const isToday = d === todayDate;
+    const isSel = calSelectedDate === d;
+    const isSun = (firstDay + d - 1) % 7 === 0;
+    const isSat = (firstDay + d - 1) % 7 === 6;
+    const withinBudget = dailyBudget > 0 && exp > 0 && exp <= dailyBudget;
+    const cls = [
+      'cal-day',
+      isToday ? 'today' : '',
+      isSel ? 'selected' : '',
+      isSun ? 'sun' : '',
+      isSat ? 'sat' : '',
+      !isToday && !isSel && heat > 0 ? `cal-heat-${heat}` : ''
+    ].filter(Boolean).join(' ');
+    const dot = exp > 0
+      ? `<div class="cal-dot ${withinBudget ? 'cal-ok-dot' : ''}" style="${withinBudget ? '' : `background:rgba(192,57,43,${0.3 + heat*0.18})`}"></div>`
+      : '';
+    calCells += `<div class="${cls}" onclick="selectCalDay(${d})">
+      <div class="cal-num">${d}</div>
+      ${dot}
+    </div>`;
+  }
+
+  // 게임화 데이터 계산
+  const gameData = calcGameData();
+
+  // 칭찬 메시지
+  const praise = getPraiseMessage(gameData);
+
+  // 선택된 날짜 상세
+  const detailHtml = calSelectedDate ? renderCalDetail(calSelectedDate, dayExp, dayInc) : '';
+
+  el.innerHTML = `
+    ${praise}
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <div class="cal-title">📅 ${vY}년 ${vM+1}월 지출 달력</div>
+        <div style="font-size:10px;color:var(--text3)">● 예산 내 &nbsp; ● 초과</div>
+      </div>
+      <div class="cal-grid">${calCells}</div>
+    </div>
+    ${detailHtml}
+    ${renderStreakCard(gameData)}
+    ${renderLevelCard(gameData)}
+    ${renderBadgeCard(gameData)}
+    ${renderSavingCalc(gameData)}
+  `;
+}
+
+function getDailyBudget() {
+  if (budget.daily > 0) return budget.daily;
+  if (budget.total > 0) {
+    const dim = new Date(vY, vM+1, 0).getDate();
+    return Math.floor(budget.total / dim);
+  }
+  return 0;
+}
+
+function selectCalDay(d) {
+  calSelectedDate = calSelectedDate === d ? null : d;
+  renderCalTab();
+}
+
+function renderCalDetail(d, dayExp, dayInc) {
+  const dateStr = `${vY}-${String(vM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const txs = monthTxs().filter(t => t.date === dateStr).sort((a,b) => a.type.localeCompare(b.type));
+  const totalExp = dayExp[d] || 0;
+  const totalInc = dayInc[d] || 0;
+  const days = ['일','월','화','수','목','금','토'];
+  const dt = new Date(dateStr + 'T00:00:00');
+  const label = `${vM+1}월 ${d}일 (${days[dt.getDay()]})`;
+
+  if (!txs.length) {
+    return `<div class="cal-detail">
+      <div class="cal-detail-header"><span>${label}</span><span style="color:var(--text3);font-weight:400">내역 없음</span></div>
+    </div>`;
+  }
+
+  const rows = txs.map(t => {
+    const c = CMAP[t.cat] || CMAP.other;
+    return `<div class="tx-item" onclick="openEditModal('${t.id}')" style="padding:10px 14px">
+      <div class="tx-ico" style="background:${c.bg};width:34px;height:34px;border-radius:10px;font-size:16px">${c.icon}</div>
+      <div class="tx-info"><div class="tx-name">${t.memo||c.label}</div><div class="tx-sub">${c.label}</div></div>
+      <div class="tx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="cal-detail">
+    <div class="cal-detail-header">
+      <span>${label}</span>
+      <span class="cal-detail-total">${totalExp>0?'-'+fmt(totalExp):''} ${totalInc>0?'+'+fmt(totalInc):''}</span>
+    </div>
+    ${rows}
+  </div>`;
+}
+
+// ── 게임화 데이터 계산 ──
+function calcGameData() {
+  const dailyBudget = getDailyBudget();
+  const dim = new Date(vY, vM+1, 0).getDate();
+  const isNow = vY===now.getFullYear() && vM===now.getMonth();
+  const lastDay = isNow ? now.getDate() : dim;
+
+  // 스트릭: 연속으로 예산 내 지출한 날
+  let streak = 0, bestStreak = 0, cur = 0;
+  const recentDays = [];
+  for (let d = 1; d <= lastDay; d++) {
+    const dateStr = `${vY}-${String(vM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const exp = monthTxs().filter(t=>t.type==='expense'&&t.date===dateStr).reduce((s,t)=>s+t.amount,0);
+    const ok = dailyBudget > 0 ? exp <= dailyBudget : exp === 0;
+    if (ok && exp > 0) { cur++; bestStreak = Math.max(bestStreak, cur); }
+    else if (exp > 0) cur = 0;
+    if (d >= lastDay - 6) recentDays.push({ d, ok: ok && exp > 0, exp });
+  }
+  streak = cur;
+
+  // 총 절약액 (월 예산 - 지출)
+  const totalExp = monthTxs().filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const saved = budget.total > 0 ? Math.max(0, budget.total - totalExp) : 0;
+
+  // 레벨 계산 (절약 금액 기반)
+  const levels = [
+    {name:'씨앗 🌱', next:10000, ico:'🌱'},
+    {name:'새싹 🌿', next:50000, ico:'🌿'},
+    {name:'나무 🌳', next:150000, ico:'🌳'},
+    {name:'숲 🌲', next:500000, ico:'🌲'},
+    {name:'절약왕 👑', next:Infinity, ico:'👑'},
+  ];
+  let level = 0;
+  for (let i = 0; i < levels.length - 1; i++) {
+    if (saved >= levels[i].next) level = i + 1;
+    else break;
+  }
+  const curLevel = levels[Math.min(level, levels.length-1)];
+  const nextLevel = levels[Math.min(level+1, levels.length-1)];
+  const prevThreshold = level > 0 ? levels[level-1].next : 0;
+  const levelProgress = nextLevel.next === Infinity ? 100
+    : Math.min(100, Math.round((saved - prevThreshold) / (nextLevel.next - prevThreshold) * 100));
+
+  return { streak, bestStreak, recentDays, saved, totalExp, level, curLevel, nextLevel, levelProgress, dailyBudget };
+}
+
+function renderStreakCard(g) {
+  if (!g.dailyBudget) return '';
+  const days = ['일','월','화','수','목','금','토'];
+  const startDay = new Date(vY, vM, new Date(vY,vM+1,0).getDate()-6).getDay();
+  const dotHtml = g.recentDays.map((r,i) => {
+    const label = `${r.d}`;
+    return `<div class="streak-dot ${r.ok?'ok':r.exp>0?'fail':''}" title="${vM+1}/${r.d}">${label}</div>`;
+  }).join('');
+
+  return `<div class="game-card">
+    <div class="game-card-title">🔥 절약 스트릭</div>
+    <div class="streak-row">
+      <div class="streak-flame">${g.streak >= 7 ? '🔥' : g.streak >= 3 ? '✨' : '💪'}</div>
+      <div class="streak-info">
+        <div class="streak-num">${g.streak}일</div>
+        <div class="streak-label">연속 예산 내 지출</div>
+      </div>
+      <div class="streak-best">🏆 최고<br><strong>${g.bestStreak}일</strong></div>
+    </div>
+    <div class="streak-days">${dotHtml}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;">● 예산 내 &nbsp; ● 초과 &nbsp; ○ 미입력</div>
+  </div>`;
+}
+
+function renderLevelCard(g) {
+  return `<div class="game-card">
+    <div class="game-card-title">⭐ 절약 레벨</div>
+    <div class="level-row">
+      <div class="level-ico">${g.curLevel.ico}</div>
+      <div class="level-info">
+        <div class="level-name">${g.curLevel.name}</div>
+        <div class="level-sub">${g.nextLevel.next===Infinity?'최고 레벨 달성! 👑':`다음: ${g.nextLevel.name} (${fmt(g.nextLevel.next)} 절약)`}</div>
+      </div>
+    </div>
+    <div class="level-bar-wrap">
+      <div class="level-bar-fill" style="width:${g.levelProgress}%"></div>
+    </div>
+    <div class="level-progress">${g.levelProgress}% 달성</div>
+  </div>`;
+}
+
+function renderBadgeCard(g) {
+  const badges = [
+    {ico:'🎯', name:'첫 예산', earned: !!budget.total},
+    {ico:'📝', name:'첫 기록', earned: transactions.length > 0},
+    {ico:'🔥', name:'3일 스트릭', earned: g.bestStreak >= 3},
+    {ico:'⚡', name:'7일 스트릭', earned: g.bestStreak >= 7},
+    {ico:'💎', name:'30일 스트릭', earned: g.bestStreak >= 30},
+    {ico:'💰', name:'1만원 절약', earned: g.saved >= 10000},
+    {ico:'🌟', name:'5만원 절약', earned: g.saved >= 50000},
+    {ico:'👑', name:'절약왕', earned: g.saved >= 150000},
+  ];
+  const badgeHtml = badges.map(b => `
+    <div class="badge-item">
+      <div class="badge-ico ${b.earned?'earned':'locked'}">${b.ico}</div>
+      <div class="badge-name">${b.name}</div>
+    </div>`).join('');
+  return `<div class="game-card">
+    <div class="game-card-title">🏅 뱃지 컬렉션</div>
+    <div class="badge-grid">${badgeHtml}</div>
+  </div>`;
+}
+
+function renderSavingCalc(g) {
+  if (g.saved <= 0) return '';
+  const items = [
+    {ico:'☕', name:'아메리카노', price:4500},
+    {ico:'🍕', name:'피자 한 판', price:25000},
+    {ico:'🎬', name:'영화 1편', price:14000},
+    {ico:'📚', name:'책 1권', price:15000},
+  ].filter(item => g.saved >= item.price)
+   .map(item => `<div class="saving-calc-item">${item.ico} ${Math.floor(g.saved/item.price)}${item.name}</div>`);
+
+  if (!items.length) return '';
+  return `<div class="game-card">
+    <div class="game-card-title">💡 절약하면 살 수 있어요</div>
+    <div class="saving-calc">
+      <div class="saving-calc-amount">${fmt(g.saved)}</div>
+      <div class="saving-calc-label">이번 달 절약 금액</div>
+      <div class="saving-calc-items">${items.join('')}</div>
+    </div>
+  </div>`;
+}
+
+function getPraiseMessage(g) {
+  if (!budget.total) return '';
+  const txs = monthTxs();
+  const totalExp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const pct = totalExp / budget.total;
+
+  let title, sub, bgColor;
+  if (g.streak >= 7) {
+    title = `🔥 ${g.streak}일 연속 절약 중이에요!`;
+    sub = '대단해요! 이 페이스로 계속 가봐요';
+    bgColor = 'linear-gradient(135deg,#c9a84c,#e8c060)';
+  } else if (pct < 0.5) {
+    title = '💚 아주 잘 하고 있어요!';
+    sub = `예산의 ${Math.round(pct*100)}%만 사용했어요. 절약 레벨이 오르고 있어요!`;
+    bgColor = 'linear-gradient(135deg,var(--green),#27ae60)';
+  } else if (pct < 0.8) {
+    title = '👍 적당히 잘 쓰고 있어요';
+    sub = '조금만 더 아끼면 절약 뱃지를 받을 수 있어요!';
+    bgColor = 'linear-gradient(135deg,#2980b9,#3498db)';
+  } else if (pct >= 1) {
+    title = '⚠️ 예산을 초과했어요';
+    sub = '내일부터 조금씩 줄여봐요. 할 수 있어요!';
+    bgColor = 'linear-gradient(135deg,#c0392b,#e74c3c)';
+  } else {
+    title = '⚡ 예산 80% 넘었어요';
+    sub = '남은 기간 하루 예산에 맞춰 써봐요!';
+    bgColor = 'linear-gradient(135deg,var(--orange),#e67e22)';
+  }
+  return `<div class="praise-card" style="background:${bgColor}">
+    <div class="praise-ico">🎉</div>
+    <div class="praise-text">
+      <div class="praise-title">${title}</div>
+      <div class="praise-sub">${sub}</div>
+    </div>
+  </div>`;
+}
+
 // ══════════════════════════════════════════
 // 렌더링 함수
 // ══════════════════════════════════════════
@@ -1750,13 +2136,14 @@ function switchTabByName(name){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById('tab-'+name);
   if(panel) panel.classList.add('active');
-  const tabNames=['list','budget','chart','ai'];
+  const tabNames=['list','cal','budget','chart','ai'];
   const tabIdx=tabNames.indexOf(name);
   const tabs=document.querySelectorAll('.tab');
   if(tabIdx>=0&&tabs[tabIdx]) tabs[tabIdx].classList.add('active');
   updateFab(name);
   if(name==='chart') renderChart();
   if(name==='ai') renderAITab();
+  if(name==='cal') renderCalTab();
 }
 
 // ── RENDER ALL ──
@@ -1777,6 +2164,7 @@ function switchTab(tab,btn){
   updateFab(tab);
   if(tab==='chart')renderChart();
   if(tab==='ai')renderAITab();
+  if(tab==='cal')renderCalTab();
 }
 function toggleDark(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
