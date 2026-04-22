@@ -655,6 +655,10 @@ body { font-size: 14px; }
 .saving-calc-items{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap;}
 .saving-calc-item{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;}
 
+
+/* 예산 모달 잔액 바 */
+.bfr-input-warn{border-color:var(--red)!important;}
+
 </style>
 </head>
 <body>
@@ -858,12 +862,37 @@ body { font-size: 14px; }
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">예산 설정</div>
+
+    <!-- 월 총 예산 -->
     <div class="modal-section">월 예산</div>
-    <div class="budget-field-row"><div class="bfr-icon" style="background:#f0f0f0">💰</div><div class="bfr-label">월 총 예산</div><input class="bfr-input" type="number" id="totalBudgetInput" placeholder="0"></div>
-    <div class="budget-field-row"><div class="bfr-icon" style="background:#e8f5ee">📅</div><div class="bfr-label">일일 예산</div><input class="bfr-input" type="number" id="dailyBudgetInput" placeholder="0"></div>
+    <div class="budget-field-row">
+      <div class="bfr-icon" style="background:#f0f0f0">💰</div>
+      <div class="bfr-label">월 총 예산</div>
+      <input class="bfr-input" type="number" id="totalBudgetInput" placeholder="0" oninput="onTotalBudgetChange()">
+    </div>
+    <div class="budget-field-row">
+      <div class="bfr-icon" style="background:#e8f5ee">📅</div>
+      <div class="bfr-label">일일 예산</div>
+      <input class="bfr-input" type="number" id="dailyBudgetInput" placeholder="자동 계산">
+    </div>
     <div style="font-size:11px;color:var(--text3);margin:-4px 0 8px;padding-left:40px;">미입력 시 월 예산 ÷ 남은 일수로 자동 계산</div>
+
+    <!-- 잔액 표시 바 -->
+    <div id="budgetRemainBox" style="display:none;margin-bottom:12px;padding:12px 14px;background:var(--bg);border-radius:12px;border:1.5px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2)">카테고리 배분 현황</span>
+        <span id="budgetRemainLabel" style="font-size:13px;font-weight:700;"></span>
+      </div>
+      <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;">
+        <div id="budgetRemainBar" style="height:100%;border-radius:3px;transition:width 0.3s,background 0.3s;"></div>
+      </div>
+      <div id="budgetRemainMsg" style="font-size:11px;margin-top:5px;"></div>
+    </div>
+
+    <!-- 카테고리별 예산 -->
     <div class="modal-section">카테고리별 예산</div>
     <div id="catBudgetFields"></div>
+
     <button class="btn-main" onclick="saveBudget()">저장</button>
     <button class="btn-cancel" onclick="closeOverlay('budgetOverlay')">취소</button>
   </div>
@@ -2273,16 +2302,102 @@ async function deleteTx() {
 function openBudgetModal(){
   document.getElementById('totalBudgetInput').value = budget.total || '';
   document.getElementById('dailyBudgetInput').value = budget.daily || '';
+
+  // 카테고리별 예산 필드 생성 (입력 시 잔액 자동 계산)
   document.getElementById('catBudgetFields').innerHTML = CATS.filter(c=>c.catType!=='income').map(c=>`
-    <div class="budget-field-row">
+    <div class="budget-field-row" id="bfr_${c.id}">
       <div class="bfr-icon" style="background:${c.bg}">${c.icon}</div>
       <div class="bfr-label">${c.label}</div>
-      <input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0" value="${budget.cats[c.id]||''}">
+      <input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0"
+        value="${budget.cats[c.id]||''}" oninput="onCatBudgetChange()">
     </div>`).join('');
+
   document.getElementById('budgetOverlay').classList.add('open');
+  updateBudgetRemain();
 }
+
+// 월 총 예산 변경 시
+function onTotalBudgetChange(){
+  updateBudgetRemain();
+}
+
+// 카테고리 예산 변경 시
+function onCatBudgetChange(){
+  updateBudgetRemain();
+}
+
+// 잔액 계산 및 표시
+function updateBudgetRemain(){
+  const total = parseFloat(document.getElementById('totalBudgetInput').value) || 0;
+  const box = document.getElementById('budgetRemainBox');
+
+  if (total <= 0) {
+    box.style.display = 'none';
+    // 모든 입력창 경고 제거
+    CATS.filter(c=>c.catType!=='income').forEach(c=>{
+      const inp = document.getElementById('bc_'+c.id);
+      if(inp) inp.classList.remove('bfr-input-warn');
+    });
+    return;
+  }
+  box.style.display = 'block';
+
+  // 카테고리별 합계
+  let catTotal = 0;
+  CATS.filter(c=>c.catType!=='income').forEach(c=>{
+    const v = parseFloat(document.getElementById('bc_'+c.id)?.value) || 0;
+    catTotal += v;
+  });
+
+  const remain = total - catTotal;
+  const pct = Math.min(100, Math.round(catTotal / total * 100));
+  const isOver = remain < 0;
+  const isWarn = !isOver && pct >= 90;
+
+  // 잔액 바 색상
+  const barColor = isOver ? 'var(--red)' : isWarn ? 'var(--orange)' : 'var(--green)';
+  document.getElementById('budgetRemainBar').style.width = `${Math.min(100,pct)}%`;
+  document.getElementById('budgetRemainBar').style.background = barColor;
+
+  // 잔액 텍스트
+  const label = document.getElementById('budgetRemainLabel');
+  const msg = document.getElementById('budgetRemainMsg');
+  if (isOver) {
+    label.textContent = `${fmt(Math.abs(remain))} 초과`;
+    label.style.color = 'var(--red)';
+    msg.textContent = `⚠️ 카테고리 합계가 월 예산보다 ${fmt(Math.abs(remain))} 많아요`;
+    msg.style.color = 'var(--red)';
+  } else {
+    label.textContent = remain > 0 ? `${fmt(remain)} 남음` : '딱 맞게 설정됨 ✓';
+    label.style.color = remain === 0 ? 'var(--green)' : 'var(--text2)';
+    msg.textContent = remain > 0
+      ? `배분 ${pct}% · ${fmt(remain)} 미배분`
+      : '✓ 전체 예산을 카테고리에 완벽히 배분했어요!';
+    msg.style.color = remain === 0 ? 'var(--green)' : 'var(--text3)';
+  }
+
+  // 초과 카테고리 입력창 경고 표시
+  CATS.filter(c=>c.catType!=='income').forEach(c=>{
+    const inp = document.getElementById('bc_'+c.id);
+    if(!inp) return;
+    inp.classList.remove('bfr-input-warn');
+  });
+}
+
 async function saveBudget(){
-  budget.total = parseFloat(document.getElementById('totalBudgetInput').value) || 0;
+  const total = parseFloat(document.getElementById('totalBudgetInput').value) || 0;
+
+  // 초과 검증
+  let catTotal = 0;
+  CATS.filter(c=>c.catType!=='income').forEach(c=>{
+    catTotal += parseFloat(document.getElementById('bc_'+c.id)?.value) || 0;
+  });
+  if (total > 0 && catTotal > total) {
+    const over = catTotal - total;
+    if (!confirm(`카테고리 합계가 월 예산보다 ${fmt(over)} 초과해요.\n그래도 저장할까요?`)) return;
+  }
+
+  budget.total = total;
   budget.daily = parseFloat(document.getElementById('dailyBudgetInput').value) || 0;
   budget.cats = {};
   CATS.filter(c=>c.catType!=='income').forEach(c=>{
