@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="머니세이버">
 <meta name="theme-color" content="#0f0e0c" id="themeColor">
+<meta name="app-version" content="2.1.0">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
@@ -334,7 +335,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .cat-add-emoji{width:48px;padding:10px 4px;text-align:center;font-size:20px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;}
 .cat-add-input{flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);font-size:14px;color:var(--text);outline:none;font-family:inherit;}
 .cat-add-input:focus{border-color:var(--text);}
-.emoji-picker{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--bg);border-radius:10px;margin-bottom:8px;}
+.emoji-picker{display:flex;flex-wrap:wrap;gap:4px;padding:10px;background:var(--bg);border-radius:10px;margin-bottom:8px;max-height:260px;overflow-y:auto;}
 .emoji-opt{font-size:22px;cursor:pointer;padding:4px;border-radius:6px;transition:background 0.1s;}
 .cat-section-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;margin:12px 0 6px;}
 .cat-edit-inline{display:flex;gap:6px;align-items:center;flex:1;}
@@ -659,6 +660,19 @@ body { font-size: 14px; }
 /* 예산 모달 잔액 바 */
 .bfr-input-warn{border-color:var(--red)!important;}
 
+
+/* 트렌드 바 터치 */
+.trend-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:6px;padding:2px;transition:background 0.15s;}
+.trend-bar-wrap:active{background:var(--bg2);}
+.trend-bar-wrap.selected{background:var(--gold-bg);}
+.trend-label{font-size:9px;color:var(--text3);}
+.trend-tooltip{margin:8px 0 0;padding:10px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);display:none;}
+.trend-tooltip.show{display:block;}
+.trend-tooltip-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.trend-tooltip-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:2px 0;}
+.trend-tooltip-label{color:var(--text3);}
+.trend-tooltip-val{font-weight:700;}
+
 </style>
 </head>
 <body>
@@ -811,7 +825,7 @@ body { font-size: 14px; }
     <div id="tab-budget" class="tab-panel"><div id="budgetView"></div></div>
     <div id="tab-chart" class="tab-panel">
       <div class="card" style="margin-top:14px"><div class="card-title">카테고리별 지출</div><div class="chart-wrap"><canvas id="donutChart"></canvas></div><div class="chart-legend" id="donutLegend"></div></div>
-      <div class="card"><div class="card-title">최근 6개월 수입/지출</div><div id="trendBars" class="trend-bars"></div><div style="display:flex;gap:12px;margin-top:10px;font-size:11px;"><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block;opacity:0.8"></span>수입</span><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block;opacity:0.8"></span>지출</span></div></div>
+      <div class="card"><div class="card-title">최근 6개월 수입/지출</div><div id="trendBars" class="trend-bars"></div><div style="display:flex;gap:12px;margin-top:10px;font-size:11px;"><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block;opacity:0.8"></span>수입</span><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block;opacity:0.8"></span>지출</span></div><div id="trendTooltip" class="trend-tooltip"></div></div>
     </div>
     <div id="tab-recur" class="tab-panel">
       <div class="card" style="margin-top:14px"><div class="card-title">고정 지출/수입</div><div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6;">매달 자동으로 내역에 추가되는 항목이에요.</div><div id="recurList"></div></div>
@@ -1104,8 +1118,18 @@ let adIdx=0;
 function rotateAd(){adIdx=(adIdx+1)%ADS.length;document.getElementById('adContent').textContent=ADS[adIdx];}
 
 // ── DB ──
-const DB_NAME='moneynote_v1',DB_VER=1;let db=null;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('store'))d.createObjectStore('store');};r.onsuccess=e=>{db=e.target.result;res(db);};r.onerror=e=>rej(e.target.error);});}
+const DB_NAME='moneynote_v1',DB_VER=2;let db=null;
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open(DB_NAME,DB_VER);
+  r.onupgradeneeded=e=>{
+    const d=e.target.result;
+    // v1→v2: store가 없으면 생성, 있으면 그대로 유지 (데이터 보존)
+    if(!d.objectStoreNames.contains('store')) d.createObjectStore('store');
+  };
+  r.onsuccess=e=>{db=e.target.result;res(db);};
+  r.onerror=e=>rej(e.target.error);
+});
+}
 function dbGet(k){return new Promise((res,rej)=>{const tx=db.transaction('store','readonly');const r=tx.objectStore('store').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function dbSet(k,v){return new Promise((res,rej)=>{const tx=db.transaction('store','readwrite');const r=tx.objectStore('store').put(v,k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
 
@@ -1251,7 +1275,13 @@ async function finishLogin(user){
         transactions=cloud.tx;
         if(cloud.bg&&typeof cloud.bg==='object') budget=cloud.bg;
         if(cloud.rc&&Array.isArray(cloud.rc)) recurring=cloud.rc;
-        if(cloud.cc&&Array.isArray(cloud.cc)){customCats=cloud.cc;rebuildCats();}
+        // customCats: 로컬에 이미 있으면 로컬 우선 (사용자 설정 보존)
+        if(cloud.cc&&Array.isArray(cloud.cc)&&customCats.length===0){
+          customCats=cloud.cc;rebuildCats();
+        } else if(customCats.length>0) {
+          // 로컬 customCats를 클라우드에 업로드
+          window.fsSetUserData&&window.fsSetUserData(user.uid,'customCats',customCats).catch(()=>{});
+        }
         if(cloud.pr) isPremium=!!cloud.pr;
         if(cloud.au&&cloud.au.year===new Date().getFullYear()) aiUsageData=cloud.au;
         await dbSet('transactions',transactions);
@@ -1370,18 +1400,83 @@ async function purchasePremium(){
 }
 
 // ── CATEGORY MGMT ──
-const EMOJI_OPTS=['🍜','🍕','🍺','☕','🛒','🚌','🚗','✈️','🏠','💊','💪','🎬','🎮','📚','🎵','📱','💻','👔','👗','🛍️','🎁','🐶','🌱','⚽','🏦','💵','💰','📦','🔧','🧴','🎯'];
+// 이모지 그룹별 분류
+const EMOJI_GROUPS = [
+  {
+    label: '💳 결제 · 금융',
+    emojis: ['💳','💰','💵','💴','💶','💷','🏦','🏧','💹','📈','📉','🪙','💎','🤑','💸','🏷️','🧾','📊']
+  },
+  {
+    label: '🍽️ 식비 · 카페',
+    emojis: ['🍜','🍕','🍺','☕','🧋','🍱','🍣','🍔','🍟','🌮','🍜','🍝','🥗','🍰','🧁','🍩','🥐','🍦','🥤','🍷']
+  },
+  {
+    label: '🚗 교통 · 여행',
+    emojis: ['🚌','🚗','🚕','✈️','🚂','🚢','🛵','🚲','🛺','🚁','⛽','🅿️','🗺️','🧳','🏖️','🏕️','🗼','🎢']
+  },
+  {
+    label: '🛍️ 쇼핑 · 생활',
+    emojis: ['🛍️','👔','👗','👠','👟','🧥','👜','💄','🪞','🛋️','🧹','🧺','🪣','🛒','🏠','🔑','🪴','🛁','🪟']
+  },
+  {
+    label: '👤 사람 · 가족',
+    emojis: ['👶','🧒','👦','👧','🧑','👨','👩','🧓','👴','👵','👨‍👩‍👧','👨‍👩‍👦','👫','💑','🤱','👶🏻','🧑‍🎓','👨‍💼','👩‍💼','🤝']
+  },
+  {
+    label: '💊 건강 · 의료',
+    emojis: ['💊','🏥','🩺','🩹','💉','🧬','🦷','👓','🩻','🏋️','🧘','🚴','🤸','💪','🧖','🛁','🌡️','❤️‍🩹']
+  },
+  {
+    label: '📱 구독 · 디지털',
+    emojis: ['📱','💻','🖥️','📺','🎮','🕹️','🎧','📷','⌨️','🖱️','🖨️','📡','🔋','💾','📲','🔔','📶','🛜']
+  },
+  {
+    label: '🎬 문화 · 여가',
+    emojis: ['🎬','🎵','🎸','🎹','📚','🎨','🎭','🎤','🎙️','🎲','♟️','🎯','🎳','🎻','🎺','🥁','🪗','🎪']
+  },
+  {
+    label: '📱 페이 · 간편결제',
+    emojis: ['📲','💬','🔵','🟢','🟡','🟠','⬛','🔶','🔷','💠','🔘','🏅','🎖️','🏆','✅','💯','🔐','🔒']
+  },
+  {
+    label: '🌱 자연 · 동물',
+    emojis: ['🌱','🌳','🌸','🌺','🌻','🍀','🐶','🐱','🐰','🐻','🦊','🐼','🐨','🐯','🦁','🐸','🐧','🦋']
+  },
+  {
+    label: '⚽ 스포츠 · 취미',
+    emojis: ['⚽','🏀','⚾','🏈','🎾','🏐','🏊','🤽','🧗','🏄','🎿','⛷️','🏇','🤺','🥊','🎣','🧩','📸']
+  },
+  {
+    label: '🎁 기타',
+    emojis: ['🎁','📦','🔧','🧴','🪑','🖊️','📌','📎','🔑','🗝️','💡','🔦','🧲','⚙️','🔨','🪚','🧰','🎀']
+  },
+];
+const EMOJI_OPTS = EMOJI_GROUPS.flatMap(g => g.emojis);
 const BAR_C=['#f39c12','#2980b9','#c0392b','#27ae60','#8e44ad','#00acc1','#e67e22','#16a085'];
 const BG_C=['#fff3e0','#e3f2fd','#fce4ec','#e8f5e9','#ede7f6','#e0f7fa','#fef9e7','#e8f8f5'];
 function rebuildCats(){const base=[{id:'food',icon:'🍜',label:'식비/카페',bg:'#fff3e0',bar:'#f39c12',builtin:true,catType:'expense'},{id:'transit',icon:'🚌',label:'교통',bg:'#e3f2fd',bar:'#2980b9',builtin:true,catType:'expense'},{id:'shop',icon:'🛍️',label:'쇼핑',bg:'#fce4ec',bar:'#c0392b',builtin:true,catType:'expense'},{id:'health',icon:'💊',label:'의료/건강',bg:'#e8f5e9',bar:'#27ae60',builtin:true,catType:'expense'},{id:'culture',icon:'🎬',label:'문화/여가',bg:'#ede7f6',bar:'#8e44ad',builtin:true,catType:'expense'},{id:'sub',icon:'📱',label:'구독/통신',bg:'#e0f7fa',bar:'#00acc1',builtin:true,catType:'expense'},{id:'save',icon:'🏦',label:'저축',bg:'#e8eaf6',bar:'#3949ab',builtin:true,catType:'both'},{id:'income',icon:'💵',label:'급여/수입',bg:'#e8f5ee',bar:'#2d6a4f',builtin:true,catType:'income'},{id:'other',icon:'📦',label:'기타',bg:'#f5f5f5',bar:'#78909c',builtin:true,catType:'both'}];const merged=base.map(b=>{const ov=customCats.find(c=>c.id===b.id);return ov?{...b,...ov,builtin:true}:b;});const added=customCats.filter(c=>!base.find(b=>b.id===c.id));CATS.length=0;[...merged,...added].forEach(c=>CATS.push(c));CATS.forEach(c=>CMAP[c.id]=c);}
-async function saveCustomCats(){try{await dbSet('customCats',customCats);}catch(e){}}
+async function saveCustomCats(){
+  // 로컬 저장
+  try { await dbSet('customCats', customCats); } catch(e) {}
+  // Firestore 동기화 (로그인 시)
+  if (currentUser?.uid && window.fsSetUserData) {
+    window.fsSetUserData(currentUser.uid, 'customCats', customCats)
+      .catch(e => console.warn('[Firestore] customCats 저장 실패:', e));
+  }
+}
 function openCatModal(){renderCatMgr();document.getElementById('catOverlay').classList.add('open');document.getElementById('newCatName').value='';document.getElementById('newCatEmoji').textContent='📦';document.getElementById('emojiPickerWrap').style.display='none';}
 function renderCatMgr(){
   const expC=CATS.filter(c=>c.catType!=='income'),incC=CATS.filter(c=>c.catType==='income');
   const ih=c=>`<div class="cat-mgr-item" id="cmgr_${c.id}"><div class="cat-mgr-icon">${c.icon}</div><div class="cat-mgr-name" id="cmgr_name_${c.id}">${c.label}</div><div class="cat-mgr-actions"><button class="cat-mgr-btn" onclick="startEditCat('${c.id}')">✏️</button>${!c.builtin?`<button class="cat-mgr-btn" onclick="deleteCat('${c.id}')">✕</button>`:''}</div></div>`;
   document.getElementById('catMgrExpense').innerHTML=expC.map(ih).join('');
   document.getElementById('catMgrIncome').innerHTML=incC.map(ih).join('');
-  document.getElementById('emojiPicker').innerHTML=EMOJI_OPTS.map(e=>`<span class="emoji-opt" onclick="selectEmoji('${e}')">${e}</span>`).join('');
+  document.getElementById('emojiPicker').innerHTML = EMOJI_GROUPS.map(g => `
+    <div style="width:100%;padding:4px 0 2px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.5px;margin-bottom:4px;">${g.label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        ${g.emojis.map(e => `<span class="emoji-opt" onclick="selectEmoji('${e}')">${e}</span>`).join('')}
+      </div>
+    </div>`).join('');
 }
 function toggleEmojiPicker(){const w=document.getElementById('emojiPickerWrap');w.style.display=w.style.display==='none'?'block':'none';}
 function selectEmoji(e){document.getElementById('newCatEmoji').textContent=e;document.getElementById('emojiPickerWrap').style.display='none';}
@@ -1766,6 +1861,49 @@ function getPraiseMessage(g) {
   </div>`;
 }
 
+
+// ── 트렌드 바 터치 ──
+let selectedTrendIdx = null;
+function selectTrendBar(idx) {
+  const months = window._trendMonths;
+  if (!months) return;
+  const tooltip = document.getElementById('trendTooltip');
+
+  // 같은 바 다시 터치 시 닫기
+  if (selectedTrendIdx === idx) {
+    selectedTrendIdx = null;
+    tooltip.classList.remove('show');
+    document.querySelectorAll('.trend-bar-wrap').forEach(w => w.classList.remove('selected'));
+    return;
+  }
+  selectedTrendIdx = idx;
+
+  // 선택 표시
+  document.querySelectorAll('.trend-bar-wrap').forEach((w, i) => {
+    w.classList.toggle('selected', i === idx);
+  });
+
+  const m = months[idx];
+  const net = m.inc - m.exp;
+  const netColor = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+  tooltip.innerHTML = `
+    <div class="trend-tooltip-title">${m.fullLabel || m.label} 요약</div>
+    <div class="trend-tooltip-row">
+      <span class="trend-tooltip-label">💚 수입</span>
+      <span class="trend-tooltip-val" style="color:var(--green)">${m.inc > 0 ? '+' + fmt(m.inc) : '-'}</span>
+    </div>
+    <div class="trend-tooltip-row">
+      <span class="trend-tooltip-label">❤️ 지출</span>
+      <span class="trend-tooltip-val" style="color:var(--red)">${m.exp > 0 ? '-' + fmt(m.exp) : '-'}</span>
+    </div>
+    <div class="trend-tooltip-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;">
+      <span class="trend-tooltip-label">잔액</span>
+      <span class="trend-tooltip-val" style="color:${netColor}">${net >= 0 ? '+' : ''}${fmt(net)}</span>
+    </div>`;
+  tooltip.classList.add('show');
+}
+
 // ══════════════════════════════════════════
 // 렌더링 함수
 // ══════════════════════════════════════════
@@ -1894,9 +2032,18 @@ function renderChart(){
   // Build catIds array parallel to labels
   const catIds=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0)catIds.push(c.id);});
   document.getElementById('donutLegend').innerHTML=labels.map((l,i)=>`<div class="legend-item" onclick="openCatDetail('${catIds[i]}')" title="${l} 상세보기"><div class="legend-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
-  const months=[];for(let i=5;i>=0;i--){let y=vY,m=vM-i;if(m<0){m+=12;y--;}const k=mk(y,m),mTxs=transactions.filter(t=>t.date.startsWith(k));months.push({label:`${m+1}월`,inc:mTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)});}
+  const months=[];for(let i=5;i>=0;i--){let y=vY,m=vM-i;if(m<0){m+=12;y--;}const k=mk(y,m),mTxs=transactions.filter(t=>t.date.startsWith(k));months.push({label:`${m+1}월`,fullLabel:`${y}년 ${m+1}월`,inc:mTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)});}
   const maxVal=Math.max(...months.map(m=>Math.max(m.inc,m.exp)),1);
-  document.getElementById('trendBars').innerHTML=months.map(m=>`<div class="trend-bar-wrap"><div class="trend-bar-pair" style="height:80px"><div class="trend-bar inc" style="height:${Math.round(m.inc/maxVal*80)}px"></div><div class="trend-bar exp" style="height:${Math.round(m.exp/maxVal*80)}px"></div></div><div class="trend-label">${m.label}</div></div>`).join('');
+  // 트렌드 바 데이터 전역 저장 (터치 시 사용)
+  window._trendMonths = months;
+  document.getElementById('trendBars').innerHTML = months.map((m,i) => `
+    <div class="trend-bar-wrap" onclick="selectTrendBar(${i})" id="trendWrap_${i}">
+      <div class="trend-bar-pair" style="height:80px">
+        <div class="trend-bar inc" style="height:${Math.round(m.inc/maxVal*80)}px"></div>
+        <div class="trend-bar exp" style="height:${Math.round(m.exp/maxVal*80)}px"></div>
+      </div>
+      <div class="trend-label">${m.label}</div>
+    </div>`).join('');
 }
 
 // ── CAT DETAIL ──
