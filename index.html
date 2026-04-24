@@ -673,6 +673,17 @@ body { font-size: 14px; }
 .trend-tooltip-label{color:var(--text3);}
 .trend-tooltip-val{font-weight:700;}
 
+
+/* 통계 탭 카테고리 인라인 상세 */
+.chart-cat-detail{margin:0 14px 12px;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);animation:slideDown 0.2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.chart-cat-detail-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.chart-cat-detail-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.chart-cat-detail-info{flex:1;}
+.chart-cat-detail-name{font-size:14px;font-weight:700;color:var(--text);}
+.chart-cat-detail-total{font-size:12px;color:var(--text3);margin-top:1px;}
+.chart-cat-detail-close{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
 </style>
 </head>
 <body>
@@ -825,6 +836,7 @@ body { font-size: 14px; }
     <div id="tab-budget" class="tab-panel"><div id="budgetView"></div></div>
     <div id="tab-chart" class="tab-panel">
       <div class="card" style="margin-top:14px"><div class="card-title">카테고리별 지출</div><div class="chart-wrap"><canvas id="donutChart"></canvas></div><div class="chart-legend" id="donutLegend"></div></div>
+      <div id="chartCatDetail"></div>
       <div class="card"><div class="card-title">최근 6개월 수입/지출</div><div id="trendBars" class="trend-bars"></div><div style="display:flex;gap:12px;margin-top:10px;font-size:11px;"><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block;opacity:0.8"></span>수입</span><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block;opacity:0.8"></span>지출</span></div><div id="trendTooltip" class="trend-tooltip"></div></div>
     </div>
     <div id="tab-recur" class="tab-panel">
@@ -1904,6 +1916,66 @@ function selectTrendBar(idx) {
   tooltip.classList.add('show');
 }
 
+
+// ── 통계 탭 카테고리 인라인 상세 ──
+let selectedChartCat = null;
+function openChartCatDetail(catId) {
+  const el = document.getElementById('chartCatDetail');
+  if (!el) return;
+
+  // 같은 카테고리 다시 클릭 시 닫기
+  if (selectedChartCat === catId) {
+    selectedChartCat = null;
+    el.innerHTML = '';
+    // 범례 선택 해제
+    document.querySelectorAll('.legend-item').forEach(l => l.classList.remove('sel-cat'));
+    return;
+  }
+  selectedChartCat = catId;
+
+  // 범례 선택 표시
+  document.querySelectorAll('.legend-item').forEach(l => l.classList.remove('sel-cat'));
+  const cat = CMAP[catId] || CMAP.other;
+  const txs = monthTxs().filter(t => t.cat === catId)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const total = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const days = ['일','월','화','수','목','금','토'];
+
+  const rows = txs.length
+    ? txs.map(t => {
+        const dt = new Date(t.date + 'T00:00:00');
+        const dateLbl = `${t.date.slice(5).replace('-','.')}(${days[dt.getDay()]})`;
+        return `<div class="cat-detail-tx" onclick="openEditModal('${t.id}')">
+          <div class="cat-detail-date">${dateLbl}</div>
+          <div class="cat-detail-memo">${t.memo || cat.label}</div>
+          <div class="cat-detail-amt" style="color:${t.type==='income'?'var(--green)':'var(--red)'}">
+            ${t.type==='income'?'+':'-'}${fmt(t.amount)}
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">이 카테고리 내역이 없어요</div>';
+
+  el.innerHTML = `<div class="chart-cat-detail">
+    <div class="chart-cat-detail-header">
+      <div class="chart-cat-detail-ico" style="background:${cat.bg}">${cat.icon}</div>
+      <div class="chart-cat-detail-info">
+        <div class="chart-cat-detail-name">${cat.label}</div>
+        <div class="chart-cat-detail-total">${vY}년 ${vM+1}월 · 총 ${fmt(total)} · ${txs.length}건</div>
+      </div>
+      <button class="chart-cat-detail-close" onclick="openChartCatDetail('${catId}')">✕</button>
+    </div>
+    ${rows}
+  </div>`;
+
+  // 선택된 범례 강조
+  document.querySelectorAll('.legend-item').forEach(l => {
+    if (l.textContent.trim().includes(cat.label)) l.classList.add('sel-cat');
+  });
+
+  // 스크롤
+  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
 // ══════════════════════════════════════════
 // 렌더링 함수
 // ══════════════════════════════════════════
@@ -2023,6 +2095,10 @@ function smartTip(txs,totalExp,totalBud){const isNow=vY===now.getFullYear()&&vM=
 
 // ── RENDER CHART ──
 function renderChart(){
+  // 탭 전환 시 선택 초기화
+  selectedChartCat = null;
+  const detailEl = document.getElementById('chartCatDetail');
+  if (detailEl) detailEl.innerHTML = '';
   const txs=monthTxs().filter(t=>t.type==='expense'),catSpend={};txs.forEach(t=>{catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount;});
   const labels=[],data=[],colors=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0){labels.push(c.label);data.push(catSpend[c.id]);colors.push(c.bar);}});
   if(donutChart)donutChart.destroy();
@@ -2031,7 +2107,7 @@ function renderChart(){
   donutChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.parsed)} (${Math.round(ctx.parsed/data.reduce((a,b)=>a+b,0)*100)}%)`}}}}});
   // Build catIds array parallel to labels
   const catIds=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0)catIds.push(c.id);});
-  document.getElementById('donutLegend').innerHTML=labels.map((l,i)=>`<div class="legend-item" onclick="openCatDetail('${catIds[i]}')" title="${l} 상세보기"><div class="legend-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
+  document.getElementById('donutLegend').innerHTML=labels.map((l,i)=>`<div class="legend-item" onclick="openChartCatDetail('${catIds[i]}')" title="${l} 상세보기"><div class="legend-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
   const months=[];for(let i=5;i>=0;i--){let y=vY,m=vM-i;if(m<0){m+=12;y--;}const k=mk(y,m),mTxs=transactions.filter(t=>t.date.startsWith(k));months.push({label:`${m+1}월`,fullLabel:`${y}년 ${m+1}월`,inc:mTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)});}
   const maxVal=Math.max(...months.map(m=>Math.max(m.inc,m.exp)),1);
   // 트렌드 바 데이터 전역 저장 (터치 시 사용)
