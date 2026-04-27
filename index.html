@@ -299,7 +299,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-s
 .btn-danger:active{opacity:0.8;}
 .btn-secondary{width:100%;padding:13px;border-radius:14px;background:var(--bg);color:var(--text2);border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:all 0.18s;}
 .btn-secondary:active{opacity:0.8;}
-.btn-cancel{width:100%;padding:13px;border-radius:14px;background:transparent;color:var(--text3);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity 0.15s;}
+.btn-cancel{width:100%;padding:13px;border-radius:14px;background:var(--bg);color:var(--text2);border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:opacity 0.15s;}
 .btn-cancel:active{opacity:0.6;}
 .budget-field-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .bfr-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
@@ -2071,11 +2071,32 @@ function openZeroDayModal() {
     dayExp[d] = (dayExp[d]||0) + t.amount;
   });
 
-  // 달력 그리드
+  // 그리드는 renderZeroDayGrid()가 처리
+  document.getElementById('zeroDayOverlay').classList.add('open');
+  // 오버레이 열린 후 그리드 렌더 (DOM 준비 후)
+  setTimeout(() => renderZeroDayGrid(), 50);
+}
+
+function toggleZeroDay(d) {
+  const idx = tempZeroDays.indexOf(d);
+  if (idx >= 0) tempZeroDays.splice(idx, 1);
+  else tempZeroDays.push(d);
+  renderZeroDayGrid(); // 오버레이 닫지 않고 그리드만 업데이트
+}
+
+function renderZeroDayGrid() {
+  const dim = new Date(vY, vM+1, 0).getDate();
+  const isNow = vY===now.getFullYear() && vM===now.getMonth();
+  const today = now.getDate();
+  const dayExp = {};
+  monthTxs().filter(t=>t.type==='expense').forEach(t=>{
+    const d = parseInt(t.date.split('-')[2]);
+    dayExp[d] = (dayExp[d]||0) + t.amount;
+  });
+
   const cells = [];
   for (let d = 1; d <= dim; d++) {
     const isPast = isNow ? d < today : true;
-    const isToday = isNow && d === today;
     const isSelected = tempZeroDays.includes(d);
     const hasExp = (dayExp[d]||0) > 0;
     const isSuccess = isSelected && isPast && !hasExp;
@@ -2085,22 +2106,16 @@ function openZeroDayModal() {
     if (isSuccess) { cls += ' success'; ico = '<div class="zd-ico">✅</div>'; }
     else if (isFail) { cls += ' past-fail'; ico = '<div class="zd-ico">❌</div>'; }
     else if (isSelected) { cls += ' selected'; ico = '<div class="zd-ico">🚫</div>'; }
-    cells.push(`<div class="${cls}" onclick="toggleZeroDay(${d})" id="zdcell_${d}">${d}${ico}</div>`);
+    cells.push(`<div class="${cls}" onclick="toggleZeroDay(${d})">${d}${ico}</div>`);
   }
-  document.getElementById('zeroDayGrid').innerHTML = cells.join('');
+  const grid = document.getElementById('zeroDayGrid');
+  if (grid) grid.innerHTML = cells.join('');
 
-  // 상태 요약
+  // 상태 요약 업데이트
   const totalSelected = tempZeroDays.length;
-  const succeeded = tempZeroDays.filter(d => {
-    const isPast = isNow ? d < today : true;
-    return isPast && !(dayExp[d]||0);
-  }).length;
-  const failed = tempZeroDays.filter(d => {
-    const isPast = isNow ? d < today : true;
-    return isPast && (dayExp[d]||0) > 0;
-  }).length;
+  const succeeded = tempZeroDays.filter(d => { const ip = isNow ? d < today : true; return ip && !(dayExp[d]||0); }).length;
+  const failed = tempZeroDays.filter(d => { const ip = isNow ? d < today : true; return ip && (dayExp[d]||0) > 0; }).length;
   const upcoming = tempZeroDays.filter(d => isNow ? d >= today : false).length;
-
   let statusHtml = '';
   if (!totalSelected) {
     statusHtml = '날짜를 눌러 제로소비데이를 정해보세요!<br>소비 없이 보내면 뱃지를 드려요 🏅';
@@ -2110,16 +2125,8 @@ function openZeroDayModal() {
     if (failed) statusHtml += ` &nbsp;❌ 실패: <strong style="color:var(--red)">${failed}일</strong>`;
     if (upcoming) statusHtml += ` &nbsp;🚫 예정: <strong>${upcoming}일</strong>`;
   }
-  document.getElementById('zeroDayStatus').innerHTML = statusHtml;
-  document.getElementById('zeroDayOverlay').classList.add('open');
-}
-
-function toggleZeroDay(d) {
-  const idx = tempZeroDays.indexOf(d);
-  if (idx >= 0) tempZeroDays.splice(idx, 1);
-  else tempZeroDays.push(d);
-  // UI 업데이트 없이 모달 재렌더
-  openZeroDayModal();
+  const statusEl = document.getElementById('zeroDayStatus');
+  if (statusEl) statusEl.innerHTML = statusHtml;
 }
 
 async function saveZeroDays() {
@@ -2803,28 +2810,37 @@ function updateBudgetRemain(){
 }
 
 async function saveBudget(){
-  const total = parseFloat(document.getElementById('totalBudgetInput').value) || 0;
+  const totalInp = document.getElementById('totalBudgetInput');
+  const dailyInp = document.getElementById('dailyBudgetInput');
+  if (!totalInp) { alert('예산 입력 오류. 다시 시도해주세요.'); return; }
 
-  // 초과 검증
+  const total = parseFloat(totalInp.value) || 0;
+  const daily = parseFloat(dailyInp?.value) || 0;
+
+  // 카테고리별 예산 수집
+  const newCats = {};
   let catTotal = 0;
   CATS.filter(c=>c.catType!=='income').forEach(c=>{
-    catTotal += parseFloat(document.getElementById('bc_'+c.id)?.value) || 0;
+    const inp = document.getElementById('bc_'+c.id);
+    const v = parseFloat(inp?.value) || 0;
+    if (v > 0) { newCats[c.id] = v; catTotal += v; }
   });
+
+  // 초과 검증
   if (total > 0 && catTotal > total) {
     const over = catTotal - total;
     if (!confirm(`카테고리 합계가 월 예산보다 ${fmt(over)} 초과해요.\n그래도 저장할까요?`)) return;
   }
 
   budget.total = total;
-  budget.daily = parseFloat(document.getElementById('dailyBudgetInput').value) || 0;
-  budget.cats = {};
-  CATS.filter(c=>c.catType!=='income').forEach(c=>{
-    const v = parseFloat(document.getElementById('bc_'+c.id).value) || 0;
-    if (v > 0) budget.cats[c.id] = v;
-  });
+  budget.daily = daily;
+  budget.cats = newCats;
+
   await saveAll();
   document.getElementById('budgetOverlay').classList.remove('open');
   render();
+  // 예산 탭이 보이면 바로 갱신
+  if (document.getElementById('tab-budget')?.classList.contains('active')) renderBudget();
 }
 function openRecurModal(){
   editRecurId=null;
