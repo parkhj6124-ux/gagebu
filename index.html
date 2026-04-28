@@ -293,13 +293,13 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-s
 .field input:focus,.field select:focus{border-color:var(--primary);background:var(--white);box-shadow:0 0 0 3px rgba(27,28,30,0.08);}
 [data-theme="dark"] .field input:focus,[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(244,245,247,0.1);}
 .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
-.btn-main{width:100%;padding:15px;border-radius:14px;background:var(--primary);color:#ffffff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:all 0.18s;letter-spacing:-0.3px;}
+.btn-main{width:100%;padding:15px;border-radius:14px;background:#1b1c1e;color:#ffffff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:all 0.18s;letter-spacing:-0.3px;}
 .btn-main:active{opacity:0.82;transform:scale(0.99);}
 .btn-danger{width:100%;padding:13px;border-radius:14px;background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:all 0.18s;}
 .btn-danger:active{opacity:0.8;}
 .btn-secondary{width:100%;padding:13px;border-radius:14px;background:var(--bg);color:var(--text2);border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:all 0.18s;}
 .btn-secondary:active{opacity:0.8;}
-.btn-cancel{width:100%;padding:13px;border-radius:14px;background:var(--bg);color:var(--text2);border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:opacity 0.15s;}
+.btn-cancel{width:100%;padding:13px;border-radius:14px;background:transparent;color:#1b1c1e;border:1.5px solid #d1d5db;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:opacity 0.15s;}
 .btn-cancel:active{opacity:0.6;}
 .budget-field-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .bfr-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
@@ -721,6 +721,10 @@ body { font-size: 14px; }
 .cbt-label{font-size:12px;font-weight:700;color:var(--text2);}
 .cbt-value{font-size:14px;font-weight:800;color:var(--text);}
 
+
+[data-theme="dark"] .btn-main{background:#f4f5f7;color:#1b1c1e;}
+
+[data-theme="dark"] .btn-cancel{color:#f4f5f7;border-color:#3d3f45;}
 </style>
 </head>
 <body>
@@ -769,7 +773,7 @@ body { font-size: 14px; }
 
 <!-- USER MENU OVERLAY -->
 <div class="overlay" id="userMenuOverlay" onclick="closeOverlay('userMenuOverlay',event)">
-  <div class="sheet user-menu-sheet">
+  <div class="sheet user-menu-sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="user-info">
       <div class="u-avatar-lg" id="uAvatarLg">?</div>
@@ -891,7 +895,7 @@ body { font-size: 14px; }
 
 <!-- ADD/EDIT -->
 <div class="overlay" id="addOverlay" onclick="closeOverlay('addOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div class="sheet-title" id="sheetTitle" style="margin-bottom:0">내역 추가</div>
@@ -925,7 +929,7 @@ body { font-size: 14px; }
 
 <!-- BUDGET -->
 <div class="overlay" id="budgetOverlay" onclick="closeOverlay('budgetOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-title">예산 설정</div>
 
@@ -969,7 +973,7 @@ body { font-size: 14px; }
 
 <!-- ZERO DAY MODAL -->
 <div class="overlay" id="zeroDayOverlay" onclick="closeOverlay('zeroDayOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-title">🚫 제로소비데이 설정</div>
     <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px;">
@@ -986,7 +990,7 @@ body { font-size: 14px; }
 
 <!-- RECURRING -->
 <div class="overlay" id="recurOverlay" onclick="closeOverlay('recurOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="recurSheetTitle">고정 항목 추가</div>
     <div class="type-toggle">
@@ -1008,7 +1012,7 @@ body { font-size: 14px; }
 
 <!-- CATEGORY -->
 <div class="overlay" id="catOverlay" onclick="closeOverlay('catOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-title">카테고리 관리</div>
     <div class="cat-section-label">지출 카테고리</div>
@@ -1029,7 +1033,7 @@ body { font-size: 14px; }
 
 <!-- NOTIFICATION OVERLAY -->
 <div class="overlay" id="notifOverlay" onclick="closeOverlay('notifOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-title">🔔 알림 설정</div>
     <div style="font-size:12px;color:var(--text3);margin-top:-10px;margin-bottom:16px;line-height:1.6;">매일 지출 기록을 잊지 않도록<br>원하는 시간에 알림을 받을 수 있어요</div>
@@ -1128,7 +1132,7 @@ body { font-size: 14px; }
 
 <!-- PAYWALL -->
 <div class="overlay" id="paywallOverlay" onclick="closeOverlay('paywallOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="paywall-hero">
       <div class="paywall-ico">✦</div>
@@ -2717,25 +2721,30 @@ async function deleteTx() {
   render();
 }
 function openBudgetModal(){
-  document.getElementById('totalBudgetInput').value = budget.total || '';
-  document.getElementById('dailyBudgetInput').value = budget.daily || '';
-
-  // 카테고리별 예산 필드 생성
-  const expCats = CATS.filter(c=>c.catType!=='income');
-  document.getElementById('catBudgetFields').innerHTML = expCats.map(c=>`
-    <div class="budget-field-row" id="bfr_${c.id}">
-      <div class="bfr-icon" style="background:${c.bg}">${c.icon}</div>
-      <div class="bfr-label">${c.label}</div>
-      <input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0"
-        value="${budget.cats[c.id]||''}" oninput="onCatBudgetChange()">
-    </div>`).join('')
-  + `<div class="cat-budget-total-row">
-      <span class="cbt-label">카테고리 합계</span>
-      <span class="cbt-value" id="catBudgetTotalVal">₩0</span>
-    </div>`;
-
   document.getElementById('budgetOverlay').classList.add('open');
-  updateBudgetRemain();
+  // DOM이 보인 후 값 설정
+  requestAnimationFrame(() => {
+    const ti = document.getElementById('totalBudgetInput');
+    const di = document.getElementById('dailyBudgetInput');
+    if (ti) ti.value = budget.total || '';
+    if (di) di.value = budget.daily || '';
+
+    const expCats = CATS.filter(c=>c.catType!=='income');
+    const fieldsEl = document.getElementById('catBudgetFields');
+    if (!fieldsEl) return;
+    fieldsEl.innerHTML = expCats.map(c=>`
+      <div class="budget-field-row" id="bfr_${c.id}">
+        <div class="bfr-icon" style="background:${c.bg}">${c.icon}</div>
+        <div class="bfr-label">${c.label}</div>
+        <input class="bfr-input" type="number" id="bc_${c.id}" placeholder="0"
+          value="${budget.cats[c.id]||''}" oninput="onCatBudgetChange()">
+      </div>`).join('')
+    + `<div class="cat-budget-total-row">
+        <span class="cbt-label">카테고리 합계</span>
+        <span class="cbt-value" id="catBudgetTotalVal">₩0</span>
+      </div>`;
+    updateBudgetRemain();
+  });
 }
 
 // 월 총 예산 변경 시
@@ -2900,8 +2909,7 @@ async function saveRecur(){
 }
 async function deleteRecur(id){if(!confirm('이 고정 항목을 삭제할까요?'))return;recurring=recurring.filter(r=>r.id!==id);await saveAll();renderRecur();}
 function closeOverlay(id, e) {
-  // e가 있으면 배경 클릭만 닫힘 (시트 내부 클릭은 무시)
-  if (e && e.target !== document.getElementById(id)) return;
+  // sheet에 stopPropagation이 있으므로 overlay 자체 클릭만 여기 도달
   const el = document.getElementById(id);
   if (el) el.classList.remove('open');
 }
@@ -3142,7 +3150,7 @@ init();
 </script>
 <!-- CAT DETAIL OVERLAY -->
 <div class="overlay" id="catDetailOverlay" onclick="closeOverlay('catDetailOverlay',event)">
-  <div class="sheet">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div id="catDetailContent"></div>
   </div>
