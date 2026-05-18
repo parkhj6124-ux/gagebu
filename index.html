@@ -71,7 +71,7 @@ async function fsSaveAll(uid) {
 }
 
 async function fsLoadAll(uid) {
-  const [tx, bg, rc, cc, pr, au, zd, bp] = await Promise.all([
+  const [tx, bg, rc, cc, pr, au, zd] = await Promise.all([
     fsGetUserData(uid, 'transactions'),
     fsGetUserData(uid, 'budget'),
     fsGetUserData(uid, 'recurring'),
@@ -79,9 +79,8 @@ async function fsLoadAll(uid) {
     fsGetUserData(uid, 'isPremium'),
     fsGetUserData(uid, 'aiUsageData'),
     fsGetUserData(uid, 'zeroDays'),
-    fsGetUserData(uid, 'budgetPeriod'),
   ]);
-  return { tx, bg, rc, cc, pr, au, zd, bp };
+  return { tx, bg, rc, cc, pr, au, zd };
 }
 
 // ── 전역에 Firebase 함수 노출 ──
@@ -726,72 +725,6 @@ body { font-size: 14px; }
 [data-theme="dark"] .btn-main{background:#f4f5f7;color:#1b1c1e;}
 
 [data-theme="dark"] .btn-cancel{color:#f4f5f7;border-color:#3d3f45;}
-
-/* ── 내역 선택 계산기 ── */
-.tx-calc-bar{position:sticky;bottom:calc(70px + var(--safe-bottom));left:0;right:0;margin:0 14px;background:#1b1c1e;border-radius:16px;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:40;animation:slideUp 0.2s ease;}
-.tx-calc-bar.show{display:flex;}
-.tx-calc-left{flex:1;}
-.tx-calc-count{font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px;}
-.tx-calc-amount{font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;}
-.tx-calc-regret{font-size:11px;color:#ff6b7a;margin-top:1px;}
-.tx-calc-actions{display:flex;gap:6px;}
-.tx-calc-btn{padding:7px 14px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;}
-.tx-calc-btn.regret{background:rgba(255,107,122,0.2);color:#ff6b7a;}
-.tx-calc-btn.clear{background:rgba(255,255,255,0.15);color:#fff;}
-/* 내역 아이템 선택 상태 */
-.tx-item.selected{background:var(--blue-bg);border-radius:12px;margin:-4px -8px;padding:17px 8px;}
-.tx-item.regret-marked{background:rgba(240,68,82,0.06);border-radius:12px;margin:-4px -8px;padding:17px 8px;}
-.tx-item .tx-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;font-size:11px;}
-.tx-item.selected .tx-check{background:var(--blue);border-color:var(--blue);color:white;}
-.tx-item.regret-marked .tx-check{background:var(--red);border-color:var(--red);color:white;}
-/* 모드 토글 */
-.list-mode-bar{display:flex;gap:8px;padding:10px 14px 0;}
-.list-mode-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;font-family:inherit;transition:all 0.18s;}
-.list-mode-btn.active{background:#1b1c1e;color:#fff;border-color:#1b1c1e;}
-.list-mode-btn.regret-mode.active{background:var(--red);border-color:var(--red);}
-
-/* ── 랭킹 차트 ── */
-.ranking-card{margin:10px 14px 0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-card);}
-.ranking-card-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
-.rank-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg2);}
-.rank-item:last-child{border-bottom:none;}
-.rank-num{font-size:13px;font-weight:800;color:var(--text3);width:20px;text-align:center;flex-shrink:0;}
-.rank-num.gold{color:#f59e0b;}
-.rank-num.silver{color:#9ca3af;}
-.rank-num.bronze{color:#b87333;}
-.rank-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.rank-info{flex:1;min-width:0;}
-.rank-name{font-size:13px;font-weight:600;color:var(--text);}
-.rank-bar-wrap{height:4px;background:var(--bg2);border-radius:2px;margin-top:4px;}
-.rank-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
-.rank-amount{font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;}
-.rank-pct{font-size:10px;color:var(--text3);text-align:right;margin-top:2px;}
-
-/* ── 다음 달 예산 리포트 ── */
-.next-budget-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:none;align-items:flex-end;backdrop-filter:blur(8px);}
-.next-budget-overlay.show{display:flex;}
-.next-budget-sheet{width:100%;max-width:480px;margin:0 auto;background:var(--white);border-radius:28px 28px 0 0;padding:24px 20px calc(40px + var(--safe-bottom));max-height:90vh;overflow-y:auto;}
-.next-budget-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
-.next-budget-ico{font-size:36px;}
-.next-budget-title{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.5px;}
-.next-budget-sub{font-size:12px;color:var(--text3);margin-top:2px;}
-.next-budget-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg2);}
-.next-budget-row:last-of-type{border-bottom:none;}
-.nb-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.nb-label{flex:1;font-size:13px;font-weight:500;color:var(--text);}
-.nb-input{width:110px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:700;text-align:right;color:var(--text);background:var(--bg);font-family:inherit;outline:none;}
-.nb-input:focus{border-color:#1b1c1e;background:var(--white);}
-.nb-change{font-size:10px;margin-top:2px;font-weight:600;}
-
-
-/* ── 예산 기간 설정 ── */
-.period-type-wrap{display:flex;gap:8px;margin-bottom:16px;background:var(--bg);padding:4px;border-radius:14px;}
-.period-type-btn{flex:1;padding:9px;border-radius:10px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text3);transition:all 0.2s;}
-.period-type-btn.active{background:var(--white);color:#1b1c1e;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
-.period-preview{padding:14px;background:var(--bg);border-radius:14px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.7;}
-.period-preview strong{color:var(--text);}
-.period-badge{display:inline-block;background:var(--blue-bg);color:var(--blue);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:6px;}
-
 </style>
 </head>
 <body>
@@ -878,9 +811,6 @@ body { font-size: 14px; }
   <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('budget')">
     <span class="mi-ico">🎯</span> 예산 설정
   </div>
-  <div class="more-menu-item" onclick="closeMoreMenu();openPeriodModal()">
-    <span class="mi-ico">📅</span> 예산 기간 설정
-  </div>
   <div class="more-menu-item" onclick="closeMoreMenu();switchTabByName('recur')">
     <span class="mi-ico">🔁</span> 고정 지출/수입
   </div>
@@ -896,9 +826,6 @@ body { font-size: 14px; }
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();toggleDark()">
     <span class="mi-ico" id="darkIco">🌙</span> <span id="darkLabel">다크모드</span>
-  </div>
-  <div class="more-menu-item" onclick="closeMoreMenu();openNextBudget()">
-    <span class="mi-ico">📋</span> 다음 달 예산 제안
   </div>
   <div class="more-menu-item" onclick="closeMoreMenu();exportCSV()">
     <span class="mi-ico">📤</span> CSV 내보내기
@@ -946,25 +873,7 @@ body { font-size: 14px; }
   </div>
 
   <div class="content">
-    <div id="tab-list" class="tab-panel active">
-      <div class="list-mode-bar">
-        <button class="list-mode-btn active" id="modeBtnNormal" onclick="setListMode('normal')">전체</button>
-        <button class="list-mode-btn" id="modeBtnSelect" onclick="setListMode('select')">💰 합산</button>
-        <button class="list-mode-btn regret-mode" id="modeBtnRegret" onclick="setListMode('regret')">😅 아까워</button>
-      </div>
-      <div id="txList"></div>
-      <div class="tx-calc-bar" id="txCalcBar">
-        <div class="tx-calc-left">
-          <div class="tx-calc-count" id="txCalcCount">0건 선택</div>
-          <div class="tx-calc-amount" id="txCalcAmount">₩0</div>
-          <div class="tx-calc-regret" id="txCalcRegret" style="display:none"></div>
-        </div>
-        <div class="tx-calc-actions">
-          <button class="tx-calc-btn regret" id="txCalcRegretBtn" onclick="toggleRegretMode()" style="display:none">😅 아까워</button>
-          <button class="tx-calc-btn clear" onclick="clearListSelection()">✕ 해제</button>
-        </div>
-      </div>
-    </div>
+    <div id="tab-list" class="tab-panel active"><div id="txList"></div></div>
     <div id="tab-cal" class="tab-panel">
       <div id="calGameArea"></div>
     </div>
@@ -972,7 +881,6 @@ body { font-size: 14px; }
     <div id="tab-chart" class="tab-panel">
       <div class="card" style="margin-top:14px"><div class="card-title">카테고리별 지출</div><div class="chart-wrap"><canvas id="donutChart"></canvas></div><div class="chart-legend" id="donutLegend"></div></div>
       <div id="chartCatDetail"></div>
-      <div id="rankingCard"></div>
       <div class="card"><div class="card-title">최근 6개월 수입/지출</div><div id="trendBars" class="trend-bars"></div><div style="display:flex;gap:12px;margin-top:10px;font-size:11px;"><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block;opacity:0.8"></span>수입</span><span style="display:flex;align-items:center;gap:4px;color:var(--text3)"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block;opacity:0.8"></span>지출</span></div><div id="trendTooltip" class="trend-tooltip"></div></div>
     </div>
     <div id="tab-recur" class="tab-panel">
@@ -983,30 +891,6 @@ body { font-size: 14px; }
   </div>
 </div>
 
-
-<!-- 다음달 예산 리포트 -->
-<div class="next-budget-overlay" id="nextBudgetOverlay">
-  <div class="next-budget-sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle" style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
-    <div class="next-budget-header">
-      <div class="next-budget-ico">📋</div>
-      <div>
-        <div class="next-budget-title" id="nextBudgetTitle">다음 달 예산 제안</div>
-        <div class="next-budget-sub" id="nextBudgetSub">이번 달 지출 기반으로 최적 예산을 제안해드려요</div>
-      </div>
-    </div>
-    <div id="nextBudgetRows"></div>
-    <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:14px;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">제안 총 예산</span>
-        <span style="font-size:18px;font-weight:800;color:var(--text);" id="nextBudgetTotal">₩0</span>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px;" id="nextBudgetSaving"></div>
-    </div>
-    <button class="btn-main" onclick="applyNextBudget()" style="background:#1b1c1e;color:#fff;">✅ 이 예산으로 적용하기</button>
-    <button class="btn-cancel" onclick="closeNextBudget()">나중에</button>
-  </div>
-</div>
 <button class="fab" id="fabBtn" onclick="fabAction()"><span style="font-size:18px">＋</span> 내역 추가</button>
 
 <!-- ADD/EDIT -->
@@ -1084,43 +968,6 @@ body { font-size: 14px; }
 
     <button class="btn-main" onclick="saveBudget()">저장</button>
     <button class="btn-cancel" onclick="closeOverlay('budgetOverlay')">취소</button>
-  </div>
-</div>
-
-<!-- 예산 기간 설정 모달 -->
-<div class="overlay" id="periodOverlay" onclick="closeOverlay('periodOverlay',event)">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">📅 예산 기간 설정</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px;">
-      예산을 관리할 기간을 설정하세요.<br>
-      <span style="color:var(--text3);font-size:11px;">월급날 기준이라면 25일~다음달 24일처럼 설정할 수 있어요</span>
-    </div>
-
-    <div class="period-type-wrap">
-      <button class="period-type-btn" id="periodBtnMonth" onclick="setPeriodType('month')">📆 달력 기준</button>
-      <button class="period-type-btn" id="periodBtnRange" onclick="setPeriodType('range')">✏️ 직접 설정</button>
-    </div>
-
-    <div id="periodRangeWrap" style="display:none">
-      <div style="display:flex;gap:10px;align-items:flex-end;">
-        <div class="field" style="flex:1;margin-bottom:0">
-          <label>시작일</label>
-          <input type="date" id="periodStartDate" oninput="updatePeriodPreview()">
-        </div>
-        <div style="padding-bottom:13px;color:var(--text3);font-size:13px;">~</div>
-        <div class="field" style="flex:1;margin-bottom:0">
-          <label>종료일</label>
-          <input type="date" id="periodEndDate" oninput="updatePeriodPreview()">
-        </div>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="periodQuickBtns"></div>
-    </div>
-
-    <div class="period-preview" id="periodPreview" style="margin-top:14px;"></div>
-
-    <button class="btn-main" onclick="savePeriod()">저장</button>
-    <button class="btn-cancel" onclick="closeOverlay('periodOverlay')">취소</button>
   </div>
 </div>
 
@@ -1391,8 +1238,6 @@ async function loadAll() {
   isPremium = !!pr;
   const zd = await safeGet('zeroDays', []);
   if (Array.isArray(zd)) zeroDays = zd;
-  const bp = await safeGet('budgetPeriod', null);
-  if (bp && typeof bp === 'object') budgetPeriod = bp;
 
   // AI 사용 횟수 (연도 바뀌면 리셋)
   const au = await safeGet('aiUsageData', null);
@@ -1517,7 +1362,6 @@ async function finishLogin(user){
         }
         if(cloud.pr) isPremium=!!cloud.pr;
         if(cloud.zd&&Array.isArray(cloud.zd)) zeroDays=cloud.zd;
-        if(cloud.bp&&typeof cloud.bp==='object') budgetPeriod=cloud.bp;
         if(cloud.au&&cloud.au.year===new Date().getFullYear()) aiUsageData=cloud.au;
         await dbSet('transactions',transactions);
         await dbSet('budget',budget);
@@ -2209,132 +2053,6 @@ function openChartCatDetail(catId) {
 }
 
 
-
-// ══════════════════════════════════════════
-// 예산 기간 설정
-// ══════════════════════════════════════════
-
-/** 현재 예산 기간의 시작/끝 날짜 반환 */
-function getBudgetPeriod(y, m) {
-  if (budgetPeriod.type === 'range' && budgetPeriod.startDate && budgetPeriod.endDate) {
-    return { start: budgetPeriod.startDate, end: budgetPeriod.endDate };
-  }
-  // 달력 기준 (기본)
-  const start = `${y}-${String(m+1).padStart(2,'0')}-01`;
-  const end = `${y}-${String(m+1).padStart(2,'0')}-${String(new Date(y,m+1,0).getDate()).padStart(2,'0')}`;
-  return { start, end };
-}
-
-/** 예산 기간 내 거래 내역 */
-function periodTxs() {
-  if (budgetPeriod.type === 'month') return monthTxs();
-  const { start, end } = getBudgetPeriod(vY, vM);
-  return transactions.filter(t => t.date >= start && t.date <= end);
-}
-
-function openPeriodModal() {
-  document.getElementById('periodOverlay').classList.add('open');
-  requestAnimationFrame(() => {
-    const type = budgetPeriod.type || 'month';
-    setPeriodType(type);
-    // 날짜 입력 초기값
-    const sd = document.getElementById('periodStartDate');
-    const ed = document.getElementById('periodEndDate');
-    if (sd) sd.value = budgetPeriod.startDate || '';
-    if (ed) ed.value = budgetPeriod.endDate || '';
-    // 빠른 설정 버튼 생성
-    renderPeriodQuickBtns();
-    updatePeriodPreview();
-  });
-}
-
-function renderPeriodQuickBtns() {
-  const wrap = document.getElementById('periodQuickBtns');
-  if (!wrap) return;
-  const presets = [
-    { label: '이번 달', start: `${vY}-${String(vM+1).padStart(2,'0')}-01`, end: `${vY}-${String(vM+1).padStart(2,'0')}-${String(new Date(vY,vM+1,0).getDate()).padStart(2,'0')}` },
-    { label: '15일 기준', start: `${vY}-${String(vM+1).padStart(2,'0')}-15`, end: `${vY}-${String(vM+2>12?1:vM+2).padStart(2,'00'.slice(0,2-String(vM+2>12?1:vM+2).length))}-14` },
-    { label: '25일 기준', start: `${vY}-${String(vM+1).padStart(2,'0')}-25`, end: (() => { let em=vM+1,ey=vY; if(em>11){em=0;ey++;} return `${ey}-${String(em+1).padStart(2,'0')}-24`; })() },
-  ];
-  wrap.innerHTML = presets.map(p =>
-    `<button onclick="applyPeriodPreset('${p.start}','${p.end}')" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">${p.label}</button>`
-  ).join('');
-}
-
-function applyPeriodPreset(start, end) {
-  const sd = document.getElementById('periodStartDate');
-  const ed = document.getElementById('periodEndDate');
-  if (sd) sd.value = start;
-  if (ed) ed.value = end;
-  updatePeriodPreview();
-}
-
-function setPeriodType(type) {
-  budgetPeriod.type = type;
-  document.getElementById('periodBtnMonth').classList.toggle('active', type==='month');
-  const rangeBtn = document.getElementById('periodBtnRange');
-  if (rangeBtn) rangeBtn.classList.toggle('active', type==='range');
-  const rangeWrap = document.getElementById('periodRangeWrap');
-  if (rangeWrap) rangeWrap.style.display = type==='range' ? 'block' : 'none';
-  updatePeriodPreview();
-}
-
-function updatePeriodPreview() {
-  const preview = document.getElementById('periodPreview');
-  if (!preview) return;
-  if (budgetPeriod.type === 'month') {
-    const dim = new Date(vY, vM+1, 0).getDate();
-    preview.innerHTML = `<strong>달력 기준</strong>으로 매월 <strong>1일 ~ ${dim}일</strong>을 한 주기로 계산해요.`;
-    return;
-  }
-  const start = document.getElementById('periodStartDate')?.value || '';
-  const end = document.getElementById('periodEndDate')?.value || '';
-  if (!start || !end) {
-    preview.innerHTML = '<span style="color:var(--text3)">시작일과 종료일을 선택해주세요</span>';
-    return;
-  }
-  if (start > end) {
-    preview.innerHTML = '<span style="color:var(--red)">⚠️ 종료일이 시작일보다 앞서요</span>';
-    return;
-  }
-  const startFmt = `${start.slice(0,4)}년 ${parseInt(start.slice(5,7))}월 ${parseInt(start.slice(8))}일`;
-  const endFmt = `${end.slice(0,4)}년 ${parseInt(end.slice(5,7))}월 ${parseInt(end.slice(8))}일`;
-  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
-  preview.innerHTML = `<strong>${startFmt}</strong> ~ <strong>${endFmt}</strong><br><span style="color:var(--text3);font-size:12px;">총 ${days}일간의 예산 주기</span>`;
-}
-
-async function savePeriod() {
-  if (budgetPeriod.type === 'range') {
-    const start = document.getElementById('periodStartDate')?.value || '';
-    const end = document.getElementById('periodEndDate')?.value || '';
-    if (!start || !end) { alert('시작일과 종료일을 모두 입력해주세요.'); return; }
-    if (start > end) { alert('종료일이 시작일보다 앞서요.'); return; }
-    budgetPeriod.startDate = start;
-    budgetPeriod.endDate = end;
-  }
-  try { await dbSet('budgetPeriod', budgetPeriod); } catch(e) {}
-  if (currentUser?.uid && window.fsSetUserData) {
-    window.fsSetUserData(currentUser.uid, 'budgetPeriod', budgetPeriod).catch(()=>{});
-  }
-  closeOverlay('periodOverlay');
-  render();
-  updatePeriodBadge();
-}
-
-function updatePeriodBadge() {
-  const label = document.getElementById('monthLabel');
-  if (!label) return;
-  if (budgetPeriod.type === 'range' && budgetPeriod.startDate && budgetPeriod.endDate) {
-    const s = budgetPeriod.startDate;
-    const e = budgetPeriod.endDate;
-    const sFmt = `${parseInt(s.slice(5,7))}/${parseInt(s.slice(8))}`;
-    const eFmt = `${parseInt(e.slice(5,7))}/${parseInt(e.slice(8))}`;
-    label.innerHTML = `${vY}년 ${vM+1}월 <span style="font-size:10px;background:var(--blue-bg);color:var(--blue);padding:1px 6px;border-radius:10px;font-weight:700;margin-left:2px;">${sFmt}~${eFmt}</span>`;
-  } else {
-    label.textContent = `${vY}년 ${vM+1}월`;
-  }
-}
-
 // ══════════════════════════════════════════
 // 제로소비데이
 // ══════════════════════════════════════════
@@ -2456,220 +2174,6 @@ function getZeroDayData() {
   return { thisMonth: thisMonthZero.length, succeeded: succeeded.length, totalEver };
 }
 
-
-// ══════════════════════════════════════════
-// 내역 선택 계산기 (합산 + 아까워)
-// ══════════════════════════════════════════
-let listMode = 'normal'; // normal | select | regret
-let selectedTxIds = new Set();
-let regretTxIds = new Set();
-
-function setListMode(mode) {
-  listMode = mode;
-  selectedTxIds.clear();
-  regretTxIds.clear();
-  // 버튼 상태
-  document.querySelectorAll('.list-mode-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('modeBtnNormal').classList.toggle('active', mode==='normal');
-  document.getElementById('modeBtnSelect').classList.toggle('active', mode==='select');
-  document.getElementById('modeBtnRegret').classList.toggle('active', mode==='regret');
-  updateCalcBar();
-  renderList();
-}
-
-function toggleTxSelect(id, isRegret=false) {
-  if (listMode === 'normal') return;
-  const set = isRegret ? regretTxIds : selectedTxIds;
-  if (set.has(id)) set.delete(id);
-  else set.add(id);
-  updateCalcBar();
-  // 해당 아이템만 업데이트
-  const el = document.getElementById('txi_' + id);
-  if (el) {
-    const sel = selectedTxIds.has(id);
-    const reg = regretTxIds.has(id);
-    el.className = 'tx-item' + (sel?' selected':'') + (reg?' regret-marked':'');
-    const chk = el.querySelector('.tx-check');
-    if (chk) chk.textContent = sel||reg ? '✓' : '';
-  }
-}
-
-function updateCalcBar() {
-  const bar = document.getElementById('txCalcBar');
-  const allSelected = new Set([...selectedTxIds, ...regretTxIds]);
-  if (allSelected.size === 0 || listMode === 'normal') {
-    bar.classList.remove('show');
-    return;
-  }
-  bar.classList.add('show');
-  const txs = monthTxs();
-  const selTotal = [...selectedTxIds].reduce((s,id) => {
-    const t = txs.find(x=>x.id===id);
-    return s + (t?.amount||0);
-  }, 0);
-  const regTotal = [...regretTxIds].reduce((s,id) => {
-    const t = txs.find(x=>x.id===id);
-    return s + (t?.amount||0);
-  }, 0);
-  const total = selTotal + regTotal;
-  document.getElementById('txCalcCount').textContent = `${allSelected.size}건 선택`;
-  document.getElementById('txCalcAmount').textContent = fmt(total);
-  const regretEl = document.getElementById('txCalcRegret');
-  if (regTotal > 0) {
-    regretEl.style.display = 'block';
-    regretEl.textContent = `😅 아까운 지출 ${fmt(regTotal)}`;
-  } else {
-    regretEl.style.display = 'none';
-  }
-}
-
-function clearListSelection() {
-  selectedTxIds.clear();
-  regretTxIds.clear();
-  updateCalcBar();
-  renderList();
-}
-
-// ══════════════════════════════════════════
-// 지출 랭킹
-// ══════════════════════════════════════════
-function renderRanking() {
-  const txs = monthTxs().filter(t=>t.type==='expense');
-  const catSpend = {};
-  txs.forEach(t => { catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount; });
-  const total = Object.values(catSpend).reduce((s,v)=>s+v, 0);
-  const sorted = Object.entries(catSpend)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0, 7);
-  if (!sorted.length) {
-    document.getElementById('rankingCard').innerHTML = '';
-    return;
-  }
-  const maxVal = sorted[0][1];
-  const medals = ['🥇','🥈','🥉'];
-  const medalClass = ['gold','silver','bronze'];
-  const rows = sorted.map(([catId, amt], i) => {
-    const cat = CMAP[catId]||CMAP.other;
-    const pct = Math.round(amt/total*100);
-    const barPct = Math.round(amt/maxVal*100);
-    return `<div class="rank-item">
-      <div class="rank-num ${medalClass[i]||''}">${medals[i]||i+1}</div>
-      <div class="rank-ico" style="background:${cat.bg}">${cat.icon}</div>
-      <div class="rank-info">
-        <div class="rank-name">${cat.label}</div>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar-fill" style="width:${barPct}%;background:${cat.bar}"></div>
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div class="rank-amount">${fmt(amt)}</div>
-        <div class="rank-pct">${pct}%</div>
-      </div>
-    </div>`;
-  }).join('');
-  document.getElementById('rankingCard').innerHTML = `
-    <div class="ranking-card">
-      <div class="ranking-card-title">🏆 지출 랭킹 · ${vY}년 ${vM+1}월</div>
-      ${rows}
-    </div>`;
-}
-
-// ══════════════════════════════════════════
-// 다음 달 예산 리포트
-// ══════════════════════════════════════════
-let nextBudgetData = {};
-
-function openNextBudget() {
-  const txs = monthTxs().filter(t=>t.type==='expense');
-  const catSpend = {};
-  txs.forEach(t => { catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount; });
-  const totalExp = Object.values(catSpend).reduce((s,v)=>s+v,0);
-
-  // 제안: 현재 지출의 90% (10% 절감 목표)
-  const expCats = CATS.filter(c=>c.catType!=='income');
-  nextBudgetData = { total: 0, cats: {} };
-
-  const rows = expCats.filter(c=>(catSpend[c.id]||0)>0||(budget.cats[c.id]||0)>0).map(c => {
-    const spent = catSpend[c.id]||0;
-    const current = budget.cats[c.id]||0;
-    // 제안: 지출의 90% (최소 현재 예산 이상)
-    const suggested = Math.max(Math.round(spent * 0.9 / 1000) * 1000, 0);
-    nextBudgetData.cats[c.id] = suggested;
-    nextBudgetData.total += suggested;
-    const diff = suggested - current;
-    const diffText = current > 0
-      ? `<span style="color:${diff<=0?'var(--green)':'var(--red)'};">${diff<=0?'▼':'▲'} ${fmt(Math.abs(diff))}</span>`
-      : '<span style="color:var(--text3)">신규</span>';
-    return `<div class="next-budget-row">
-      <div class="nb-ico" style="background:${c.bg}">${c.icon}</div>
-      <div class="nb-label">${c.label}</div>
-      <div style="text-align:right">
-        <input class="nb-input" type="number" id="nb_${c.id}"
-          value="${suggested}" oninput="updateNextBudgetTotal()">
-        <div class="nb-change">${diffText}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  const nextM = vM===11?1:vM+2;
-  const nextY = vM===11?vY+1:vY;
-  document.getElementById('nextBudgetTitle').textContent = `${nextY}년 ${nextM}월 예산 제안`;
-  document.getElementById('nextBudgetSub').textContent =
-    `이번 달 ${fmt(totalExp)} 지출 기반 · 10% 절감 목표`;
-  document.getElementById('nextBudgetRows').innerHTML = rows;
-  updateNextBudgetTotal();
-  document.getElementById('nextBudgetOverlay').classList.add('show');
-}
-
-function updateNextBudgetTotal() {
-  let total = 0;
-  const expCats = CATS.filter(c=>c.catType!=='income');
-  expCats.forEach(c => {
-    const inp = document.getElementById('nb_'+c.id);
-    if (inp) total += parseFloat(inp.value)||0;
-  });
-  document.getElementById('nextBudgetTotal').textContent = fmt(total);
-  const saving = budget.total > 0 ? budget.total - total : 0;
-  const savingEl = document.getElementById('nextBudgetSaving');
-  savingEl.textContent = saving > 0
-    ? `현재 예산 대비 ${fmt(saving)} 절감 목표`
-    : saving < 0 ? `현재 예산 대비 ${fmt(Math.abs(saving))} 증가` : '';
-  savingEl.style.color = saving > 0 ? 'var(--green)' : 'var(--text3)';
-}
-
-function closeNextBudget() {
-  document.getElementById('nextBudgetOverlay').classList.remove('show');
-}
-
-async function applyNextBudget() {
-  const expCats = CATS.filter(c=>c.catType!=='income');
-  const newCats = {};
-  let total = 0;
-  expCats.forEach(c => {
-    const inp = document.getElementById('nb_'+c.id);
-    const v = parseFloat(inp?.value)||0;
-    if (v > 0) { newCats[c.id]=v; total+=v; }
-  });
-  budget.cats = newCats;
-  budget.total = total;
-  await saveAll();
-  closeNextBudget();
-  render();
-  alert(`✅ ${document.getElementById('nextBudgetTitle').textContent}이 적용됐어요!`);
-}
-
-// 월말 리포트 체크 (매일 init 시)
-function checkMonthEndReport() {
-  const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const isLastDay = now.getDate() === dim;
-  const lastShown = localStorage.getItem('lastBudgetReport');
-  const thisMonth = `${now.getFullYear()}-${now.getMonth()}`;
-  if (isLastDay && lastShown !== thisMonth && monthTxs().length > 0) {
-    localStorage.setItem('lastBudgetReport', thisMonth);
-    setTimeout(() => openNextBudget(), 2000);
-  }
-}
-
 // ══════════════════════════════════════════
 // 렌더링 함수
 // ══════════════════════════════════════════
@@ -2679,7 +2183,7 @@ function renderHeader() {
   const inc = sumInc(txs);
   const exp = sumExp(txs);
 
-  updatePeriodBadge();
+  document.getElementById('monthLabel').textContent = `${vY}년 ${vM + 1}월`;
   document.getElementById('sumIncome').textContent = fmt(inc);
   document.getElementById('sumExpense').textContent = fmt(exp);
 
@@ -2707,20 +2211,9 @@ function renderList(){
   if(!txs.length){el.innerHTML=`<div class="empty"><div class="empty-ico">📒</div>이번 달 내역이 없어요<br><span style="font-size:12px;margin-top:6px;display:block">아래 + 버튼으로 추가해 보세요</span></div>`;return;}
   const grp={};txs.forEach(t=>{grp[t.date]=grp[t.date]||[];grp[t.date].push(t);});
   const days=['일','월','화','수','목','금','토'];
-  const isSelectMode = listMode==='select'||listMode==='regret';
   el.innerHTML=`<div class="tx-section">${Object.keys(grp).sort((a,b)=>b.localeCompare(a)).map(date=>{
     const dt=new Date(date+'T00:00:00'),lbl=`${date.slice(5).replace('-','.')} (${days[dt.getDay()]})`,net=grp[date].reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
-    return `<div class="date-label"><span>${lbl}</span><span style="color:${net>=0?'var(--green)':'var(--red)'};font-weight:700">${net>=0?'+':''}${fmt(net).replace('₩','')}원</span></div>${grp[date].map(t=>{
-      const c=CMAP[t.cat]||CMAP.other;
-      const isSel=selectedTxIds.has(t.id);
-      const isReg=regretTxIds.has(t.id);
-      const cls='tx-item'+(isSel?' selected':'')+(isReg?' regret-marked':'');
-      const onclick=isSelectMode
-        ? `toggleTxSelect('${t.id}',${listMode==='regret'})`
-        : `openEditModal('${t.id}')`;
-      const check=isSelectMode?`<div class="tx-check">${isSel||isReg?'✓':''}</div>`:'';
-      return `<div class="${cls}" id="txi_${t.id}" onclick="${onclick}">${check}<div class="tx-ico" style="background:${c.bg}">${c.icon}</div><div class="tx-info"><div class="tx-name">${t.memo||c.label}${t.recurId?'<span class="recurring-badge">반복</span>':''}</div><div class="tx-sub">${c.label}</div></div><div class="tx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div></div>`;
-    }).join('')}`;
+    return `<div class="date-label"><span>${lbl}</span><span style="color:${net>=0?'var(--green)':'var(--red)'};font-weight:700">${net>=0?'+':''}${fmt(net).replace('₩','')}원</span></div>${grp[date].map(t=>{const c=CMAP[t.cat]||CMAP.other;return `<div class="tx-item" onclick="openEditModal('${t.id}')"><div class="tx-ico" style="background:${c.bg}">${c.icon}</div><div class="tx-info"><div class="tx-name">${t.memo||c.label}${t.recurId?'<span class="recurring-badge">반복</span>':''}</div><div class="tx-sub">${c.label}</div></div><div class="tx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div></div>`;}).join('')}`;
   }).join('')}</div>`;
 }
 
@@ -2850,8 +2343,6 @@ function openCatDetail(catId){
 }
 
 // ── RENDER RECURRING ──
-// ── RENDER RANKING (renderChart에서 호출) ──
-
 function renderRecur(){
   const el=document.getElementById('recurList');
   if(!recurring.length){
@@ -3613,74 +3104,6 @@ async function initNotifications() {
   } catch {}
 }
 
-
-// ══════════════════════════════════════════
-// 한국 시간 자정 자동 날짜 갱신
-// ══════════════════════════════════════════
-
-function getKSTNow() {
-  // 한국 시간 (UTC+9)
-  const utc = new Date();
-  return new Date(utc.getTime() + 9 * 60 * 60 * 1000);
-}
-
-function scheduleKSTMidnight() {
-  const kst = getKSTNow();
-  // 오늘 자정까지 남은 밀리초 계산
-  const nextMidnight = new Date(kst);
-  nextMidnight.setHours(24, 0, 0, 0); // 내일 00:00:00 KST
-  const msUntilMidnight = nextMidnight - kst;
-
-  console.log(`[자정 갱신] ${Math.round(msUntilMidnight/60000)}분 후 갱신 예정`);
-
-  setTimeout(() => {
-    onKSTMidnight();
-    scheduleKSTMidnight(); // 다음 자정 재등록
-  }, msUntilMidnight);
-}
-
-function onKSTMidnight() {
-  console.log('[자정 갱신] 한국 시간 자정 - 날짜 갱신');
-
-  // 날짜 업데이트
-  const newNow = getKSTNow();
-  now.setTime(newNow.getTime() - 9 * 60 * 60 * 1000); // UTC로 변환해서 now 갱신
-
-  // 현재 보고 있는 달이 오늘 달이면 헤더/예산/달력 갱신
-  const todayY = newNow.getFullYear();
-  const todayM = newNow.getMonth();
-
-  // 고정 항목 자동 등록 (오늘 날짜 기준으로 새로 체크)
-  applyRecurring();
-
-  // 화면 갱신
-  render();
-
-  // 달력 탭이 열려있으면 갱신
-  if (document.getElementById('tab-cal')?.classList.contains('active')) {
-    renderCalTab();
-  }
-
-  // 월말 예산 리포트 체크
-  checkMonthEndReport();
-
-  // 알림 스케줄 재등록
-  if (typeof scheduleNotifications === 'function') {
-    scheduleNotifications();
-  }
-
-  // 자정 알림 (설정된 경우)
-  if (Notification.permission === 'granted') {
-    try {
-      new Notification('머니세이버', {
-        body: `${todayM+1}월 ${newNow.getDate()}일이 시작됐어요! 오늘도 절약해봐요 💰`,
-        icon: '/gagebu/icon-192.png',
-        tag: 'midnight',
-      });
-    } catch(e) {}
-  }
-}
-
 // ══════════════════════════════════════════
 // 앱 초기화
 // ══════════════════════════════════════════
@@ -3698,12 +3121,6 @@ async function init() {
 
   // 3. 알림 초기화
   initNotifications();
-
-  // 4. 월말 예산 리포트 체크
-  checkMonthEndReport();
-
-  // 5. 한국 시간 자정 자동 갱신 스케줄러
-  scheduleKSTMidnight();
 
   // 3. 초기 렌더링
   render();
