@@ -2812,13 +2812,14 @@ function renderChart(){
   const detailEl = document.getElementById('chartCatDetail');
   if (detailEl) detailEl.innerHTML = '';
   const txs=monthTxs().filter(t=>t.type==='expense'),catSpend={};txs.forEach(t=>{catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount;});
-  const labels=[],data=[],colors=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0){labels.push(c.label);data.push(catSpend[c.id]);colors.push(c.bar);}});
+  // 금액 많은 순서로 정렬해서 시계방향 배치
+  const raw=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0)raw.push({id:c.id,label:c.label,amt:catSpend[c.id],color:c.bar});});
+  raw.sort((a,b)=>b.amt-a.amt);
+  const labels=raw.map(r=>r.label),data=raw.map(r=>r.amt),colors=raw.map(r=>r.color),catIds=raw.map(r=>r.id);
   if(donutChart)donutChart.destroy();
   const ctx=document.getElementById('donutChart').getContext('2d');
   if(!data.length){ctx.clearRect(0,0,300,200);document.getElementById('donutLegend').innerHTML='<span style="font-size:12px;color:var(--text3)">이번 달 지출 내역이 없어요</span>';return;}
-  donutChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.parsed)} (${Math.round(ctx.parsed/data.reduce((a,b)=>a+b,0)*100)}%)`}}}}});
-  // Build catIds array parallel to labels
-  const catIds=[];CATS.filter(c=>c.catType!=='income').forEach(c=>{if((catSpend[c.id]||0)>0)catIds.push(c.id);});
+  donutChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',rotation:-90,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed)} (${Math.round(c.parsed/data.reduce((a,b)=>a+b,0)*100)}%)`}}}}});
   document.getElementById('donutLegend').innerHTML=labels.map((l,i)=>`<div class="legend-item" onclick="openChartCatDetail('${catIds[i]}')" title="${l} 상세보기"><div class="legend-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
   const months=[];for(let i=5;i>=0;i--){let y=vY,m=vM-i;if(m<0){m+=12;y--;}const k=mk(y,m),mTxs=transactions.filter(t=>t.date.startsWith(k));months.push({label:`${m+1}월`,fullLabel:`${y}년 ${m+1}월`,inc:mTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp:mTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)});}
   const maxVal=Math.max(...months.map(m=>Math.max(m.inc,m.exp)),1);
