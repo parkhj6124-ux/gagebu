@@ -924,6 +924,7 @@ body { font-size: 14px; }
         <button class="user-avatar" id="userAvatarBtn" onclick="openUserMenu()">?</button>
       </div>
     </div>
+    <div id="periodInfoBar" style="display:none;text-align:center;font-size:11px;color:var(--text3);padding:4px 0 2px;background:var(--white);border-top:1px solid var(--border)"></div>
     <div class="summary-strip">
       <div class="summary-card"><div class="summary-label">수입</div><div class="summary-value s-income" id="sumIncome">₩0</div></div>
       <div class="summary-card"><div class="summary-label">지출</div><div class="summary-value s-expense" id="sumExpense">₩0</div></div>
@@ -1736,34 +1737,39 @@ function today() {
 }
 
 /** 현재 뷰 월의 거래 내역 */
+/** 예산 주기 시작/종료 날짜 계산
+ *  달력 기준: vY년 vM+1월 1일 ~ 말일
+ *  주기 기준: vY년 vM+1월 sd일 ~ 다음달 sd-1일
+ */
+function getCurrentCycleDates(y, m) {
+  const sd = (budgetPeriod?.startDay) || 1;
+  if (!budgetPeriod || budgetPeriod.type !== 'cycle' || sd <= 1) {
+    // 달력 기준
+    const start = `${y}-${String(m+1).padStart(2,'0')}-01`;
+    const dim = new Date(y, m+1, 0).getDate();
+    const end = `${y}-${String(m+1).padStart(2,'0')}-${String(dim).padStart(2,'0')}`;
+    return { start, end };
+  }
+  // 주기 기준: 이번 달 sd일 ~ 다음 달 sd-1일
+  const start = `${y}-${String(m+1).padStart(2,'0')}-${String(sd).padStart(2,'0')}`;
+  let endY = y, endM = m + 1;
+  if (endM > 11) { endM = 0; endY++; }
+  const endDay = sd - 1;
+  const end = `${endY}-${String(endM+1).padStart(2,'0')}-${String(endDay).padStart(2,'0')}`;
+  return { start, end };
+}
+
+/** 현재 뷰(vY, vM) 기준 거래 내역 반환
+ *  예산 주기 설정 시 해당 기간만, 아니면 해당 월 전체
+ */
 function monthTxs() {
-  // 예산 주기(cycle) 설정 시 해당 주기 내 거래만 반환
-  if (budgetPeriod?.type === 'cycle' && budgetPeriod.startDay > 1) {
+  if (budgetPeriod?.type === 'cycle' && (budgetPeriod.startDay || 1) > 1) {
     const { start, end } = getCurrentCycleDates(vY, vM);
     return transactions.filter(t => t.date >= start && t.date <= end);
   }
-  // 달력 기준 (기본): 해당 월 1일~말일
+  // 달력 기준: 해당 월 1일~말일
   const key = mk(vY, vM);
   return transactions.filter(t => t.date.startsWith(key));
-}
-
-/** 예산 주기 시작/종료 날짜 계산
- *  예: startDay=25, vM=3(4월) → 4/25 ~ 5/24
- */
-function getCurrentCycleDates(y, m) {
-  const sd = budgetPeriod.startDay || 1;
-  // 시작: y년 m+1월 sd일
-  const startY = y;
-  const startM = m;
-  const start = `${startY}-${String(startM+1).padStart(2,'0')}-${String(sd).padStart(2,'0')}`;
-  // 종료: 다음달 sd-1일 (sd=1이면 이번달 말일)
-  let endY = y, endM = m + 1;
-  if (endM > 11) { endM = 0; endY++; }
-  const endDay = sd <= 1
-    ? new Date(startY, startM+1, 0).getDate() // 이번달 말일
-    : sd - 1;
-  const end = `${endY}-${String(endM+1).padStart(2,'0')}-${String(endDay).padStart(2,'0')}`;
-  return { start, end };
 }
 
 /** 지출 합계 */
